@@ -49,7 +49,7 @@ func CreateVoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	votes = append(votes, createdVote)
+	SaveVote(createdVote)
 
 	response := createVoteResponse{
 		ID:       createdVote.ID,

@@ -52,7 +52,7 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Save movie
-	movies = append(movies, createdMovie)
+	SaveMovie(createdMovie)
 
 	// Add movie to poll
 	foundPoll.AddMovie(createdMovie)

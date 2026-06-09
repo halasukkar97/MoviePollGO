@@ -43,7 +43,7 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// Save poll in memory
-	polls = append(polls, createdPoll)
+	SavePoll(createdPoll)
 
 	// Build response
 	response := CreatePollResponse{
@@ -87,7 +87,7 @@ func PollsHandler(w http.ResponseWriter, r *http.Request) {
 // ListPollsHandler Handle GET /polls
 func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
 	// Return all polls as JSON
-	err := json.NewEncoder(w).Encode(polls)
+	err := json.NewEncoder(w).Encode(GetAllPolls())
 	if err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 		return

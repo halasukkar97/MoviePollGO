@@ -32,7 +32,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		Name: req.Name,
 	})
 
-	users = append(users, createdUser)
+	SaveUser(createdUser)
 
 	response := CreateUserResponse{
 		ID:   createdUser.ID,
