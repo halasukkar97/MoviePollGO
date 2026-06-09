@@ -7,50 +7,59 @@ import (
 	"time"
 )
 
+func newTestPoll(maxVotes int, deadline time.Time) Poll {
+	return CreateNewPoll(CreatePollInput{
+		Name:              "Friday Movie Night",
+		MaxVotesPerPerson: maxVotes,
+		Deadline:          deadline,
+	})
+}
+
+func newTestMovie(pollID, title string) movie.Movie {
+	return movie.CreateNewMovie(movie.CreateMovieInput{
+		Title:       title,
+		PollID:      pollID,
+		ReleaseYear: 2021,
+		Description: title + " description",
+	})
+}
+
+func newTestVote(pollID, userID string, movieIDs []string) vote.Vote {
+	return vote.CreateNewVote(vote.CreateVoteInput{
+		PollID:   pollID,
+		UserID:   userID,
+		MovieIDs: movieIDs,
+	})
+}
+
+func requireError(t *testing.T, err error, expected string) {
+	t.Helper()
+
+	if err == nil {
+		t.Fatalf("expected error %q, got nil", expected)
+	}
+
+	if err.Error() != expected {
+		t.Fatalf("expected error %q, got %q", expected, err.Error())
+	}
+}
+
 func TestSubmitVoteSuccess(t *testing.T) {
-	// Arrange
-	p := CreateNewPoll(
-		"Friday Movie Night",
-		3,
-		time.Now().Add(24*time.Hour),
-	)
-
-	movie1 := movie.CreateNewMovie(
-		"Interstellar",
-		p.ID,
-		2014,
-		"Space exploration",
-	)
-
-	movie2 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
+	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
+	movie2 := newTestMovie(p.ID, "Dune")
 
 	p.AddMovie(movie1)
 	p.AddMovie(movie2)
 
-	v1 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie2.ID,
-		},
-	)
+	v := newTestVote(p.ID, "hela-user", []string{movie1.ID, movie2.ID})
 
-	// Act
-	err := p.SubmitVote(v1)
-
-	// Assert
+	err := p.SubmitVote(v)
 	if err != nil {
-		t.Errorf("expected vote to succeed, got error: %v", err)
+		t.Fatalf("expected vote to succeed, got error: %v", err)
 	}
 
 	results := p.GetResults()
-
 	if results[movie1.ID] != 1 {
 		t.Errorf("expected Interstellar to have 1 vote, got %d", results[movie1.ID])
 	}
@@ -61,313 +70,105 @@ func TestSubmitVoteSuccess(t *testing.T) {
 }
 
 func TestSubmitVotePollExpired(t *testing.T) {
-	// Arrange
-	p := CreateNewPoll(
-		"Friday Movie Night",
-		3,
-		time.Now().Add(-24*time.Hour),
-	)
-
-	movie1 := movie.CreateNewMovie(
-		"Interstellar",
-		p.ID,
-		2014,
-		"Space exploration",
-	)
-
-	movie2 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
+	p := newTestPoll(3, time.Now().Add(-24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
+	movie2 := newTestMovie(p.ID, "Dune")
 
 	p.AddMovie(movie1)
 	p.AddMovie(movie2)
 
-	v1 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie2.ID,
-		},
-	)
+	v := newTestVote(p.ID, "hela-user", []string{movie1.ID, movie2.ID})
 
-	// Act
-	err := p.SubmitVote(v1)
+	err := p.SubmitVote(v)
 
-	// Assert
-	if err == nil {
-		t.Errorf("expected poll expired error, got nil")
-		return
-	}
-
-	if err.Error() != "poll has expired" {
-		t.Errorf("expected poll has expired error, got: %v", err)
-	}
+	requireError(t, err, "poll has expired")
 }
 
 func TestSubmitVotePollClosed(t *testing.T) {
-	p := CreateNewPoll(
-		"Friday Movie Night",
-		3,
-		time.Now().Add(24*time.Hour),
-	)
+	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
+	movie2 := newTestMovie(p.ID, "Dune")
 
-	movie1 := movie.CreateNewMovie(
-		"Interstellar",
-		p.ID,
-		2014,
-		"Space exploration",
-	)
-
-	movie2 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
-
-	p.IsClosed = true
+	p.Close()
 	p.AddMovie(movie1)
 	p.AddMovie(movie2)
 
-	v1 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie2.ID,
-		},
-	)
+	v := newTestVote(p.ID, "hela-user", []string{movie1.ID, movie2.ID})
 
-	p.IsClosed = true
-	// Act
-	err := p.SubmitVote(v1)
+	err := p.SubmitVote(v)
 
-	// Assert
-	if err == nil {
-		t.Errorf("expected poll expired error, got nil")
-		return
-	}
-
-	if err.Error() != "poll is closed" {
-		t.Errorf("expected poll has expired error, got: %v", err)
-	}
+	requireError(t, err, "poll is closed")
 }
 
 func TestSubmitVoteAlreadyVoted(t *testing.T) {
-	p := CreateNewPoll(
-		"Friday Movie Night",
-		3,
-		time.Now().Add(24*time.Hour),
-	)
-
-	movie1 := movie.CreateNewMovie(
-		"Interstellar",
-		p.ID,
-		2014,
-		"Space exploration",
-	)
-
-	movie2 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
-
-	movie3 := movie.CreateNewMovie(
-		"titanic",
-		p.ID,
-		2021,
-		"sea",
-	)
+	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
+	movie2 := newTestMovie(p.ID, "Dune")
+	movie3 := newTestMovie(p.ID, "Titanic")
 
 	p.AddMovie(movie1)
 	p.AddMovie(movie2)
 	p.AddMovie(movie3)
 
-	v1 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie2.ID,
-			movie3.ID,
-		},
-	)
+	firstVote := newTestVote(p.ID, "hela-user", []string{movie1.ID, movie2.ID, movie3.ID})
+	secondVote := newTestVote(p.ID, "hela-user", []string{movie1.ID, movie2.ID, movie3.ID})
 
-	v2 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie2.ID,
-			movie3.ID,
-		},
-	)
-	p.SubmitVote(v2)
-
-	// Act
-	err := p.SubmitVote(v1)
-
-	// Assert
-	if err == nil {
-		t.Errorf("expected poll expired error, got nil")
-		return
+	if err := p.SubmitVote(firstVote); err != nil {
+		t.Fatalf("expected first vote to succeed, got error: %v", err)
 	}
 
-	if err.Error() != "you have already voted for this poll" {
-		t.Errorf("expected poll has expired error, got: %v", err)
-	}
+	err := p.SubmitVote(secondVote)
+
+	requireError(t, err, "you have already voted for this poll")
 }
 
 func TestSubmitVoteMovieDoesNotExist(t *testing.T) {
-	p := CreateNewPoll(
-		"Friday Movie Night",
-		3,
-		time.Now().Add(24*time.Hour),
-	)
-
-	movie1 := movie.CreateNewMovie(
-		"Interstellar",
-		p.ID,
-		2014,
-		"Space exploration",
-	)
-
-	movie2 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
+	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
+	movie2 := newTestMovie(p.ID, "Dune")
 
 	p.AddMovie(movie1)
 
-	v1 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie2.ID,
-		},
-	)
+	v := newTestVote(p.ID, "hela-user", []string{movie1.ID, movie2.ID})
 
-	// Act
-	err := p.SubmitVote(v1)
+	err := p.SubmitVote(v)
 
-	// Assert
-	if err == nil {
-		t.Errorf("expected poll expired error, got nil")
-		return
-	}
-
-	if err.Error() != "this movie doesn't exist in this poll" {
-		t.Errorf("expected poll has expired error, got: %v", err)
-	}
+	requireError(t, err, "this movie doesn't exist in this poll")
 }
 
 func TestSubmitVoteDuplicateMovie(t *testing.T) {
-	p := CreateNewPoll(
-		"Friday Movie Night",
-		3,
-		time.Now().Add(24*time.Hour),
-	)
-
-	movie1 := movie.CreateNewMovie(
-		"Interstellar",
-		p.ID,
-		2014,
-		"Space exploration",
-	)
+	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
 
 	p.AddMovie(movie1)
 
-	v1 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie1.ID,
-		},
-	)
+	v := newTestVote(p.ID, "hela-user", []string{movie1.ID, movie1.ID})
 
-	// Act
-	err := p.SubmitVote(v1)
+	err := p.SubmitVote(v)
 
-	// Assert
-	if err == nil {
-		t.Errorf("expected duplicate movie error, got nil), got nil")
-		return
-	}
-
-	if err.Error() != "duplicated votes for the same movie are not allowed" {
-		t.Errorf("expected poll has expired error, got: %v", err)
-	}
+	requireError(t, err, "duplicated votes for the same movie are not allowed")
 }
 
 func TestSubmitVoteTooManyMovies(t *testing.T) {
-	p := CreateNewPoll(
-		"Friday Movie Night",
-		3,
-		time.Now().Add(24*time.Hour),
-	)
-
-	movie1 := movie.CreateNewMovie(
-		"Interstellar",
-		p.ID,
-		2014,
-		"Space exploration",
-	)
-
-	movie2 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
-	movie3 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
-	movie4 := movie.CreateNewMovie(
-		"Dune",
-		p.ID,
-		2021,
-		"Arrakis",
-	)
+	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
+	movie2 := newTestMovie(p.ID, "Dune")
+	movie3 := newTestMovie(p.ID, "Titanic")
+	movie4 := newTestMovie(p.ID, "Arrival")
 
 	p.AddMovie(movie1)
 	p.AddMovie(movie2)
 	p.AddMovie(movie3)
 	p.AddMovie(movie4)
 
-	v1 := vote.CreateNewVote(
-		p.ID,
-		"hela-user",
-		[]string{
-			movie1.ID,
-			movie2.ID,
-			movie3.ID,
-			movie4.ID,
-		},
-	)
+	v := newTestVote(p.ID, "hela-user", []string{
+		movie1.ID,
+		movie2.ID,
+		movie3.ID,
+		movie4.ID,
+	})
 
-	// Act
-	err := p.SubmitVote(v1)
+	err := p.SubmitVote(v)
 
-	// Assert
-	if err == nil {
-		t.Errorf("expected poll expired error, got nil")
-		return
-	}
-
-	if err.Error() != "too many movies selected" {
-		t.Errorf("expected poll has expired error, got: %v", err)
-	}
+	requireError(t, err, "too many movies selected")
 }
