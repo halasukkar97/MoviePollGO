@@ -27,6 +27,8 @@ func main() {
 	http.HandleFunc("/movies", api.MoviesHandler)
 	http.HandleFunc("/votes", api.CreateVoteHandler)
 	http.HandleFunc("/results", api.ResultsHandler)
+	// The trailing slash route catches paths like /polls/abc-123.
+	http.HandleFunc("/polls/", api.PollByIDHandler)
 
 	// ListenAndServe keeps the server running and waits for browser/API requests.
 	http.ListenAndServe(":8080", nil)

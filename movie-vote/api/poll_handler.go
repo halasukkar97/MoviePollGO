@@ -5,6 +5,7 @@ import (
 	"movie-vote/database"
 	"movie-vote/poll"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -182,4 +183,24 @@ func GetAllPolls() ([]poll.Poll, error) {
 	}
 
 	return polls, nil
+}
+
+// PollByIDHandler handles GET /polls/{id}.
+// It extracts the ID from the URL path, loads that poll, and returns it as JSON.
+func PollByIDHandler(w http.ResponseWriter, r *http.Request) {
+	// TrimPrefix removes "/polls/" so the remaining path is the poll ID.
+	pollID := strings.TrimPrefix(r.URL.Path, "/polls/")
+
+	foundPoll, found := FindPollByID(pollID)
+	if !found {
+		http.Error(w, "poll not found", http.StatusNotFound)
+		return
+	}
+
+	// Encode writes the full poll, including loaded movies and votes, as JSON.
+	err := json.NewEncoder(w).Encode(foundPoll)
+	if err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }

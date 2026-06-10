@@ -32,11 +32,18 @@ func FindPollByID(pollID string) (*poll.Poll, bool) {
 		return nil, false
 	}
 
+	// A single poll response should include its related movies and votes.
 	movies, err := GetMoviesByPollID(foundPoll.ID)
 	if err != nil {
 		return nil, false
 	}
 
+	votes, err := GetVotesByPollID(foundPoll.ID)
+	if err != nil {
+		return nil, false
+	}
+
+	foundPoll.Votes = votes
 	foundPoll.Movies = movies
 
 	return &foundPoll, true
