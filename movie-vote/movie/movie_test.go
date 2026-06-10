@@ -6,6 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// TestCreateNewMovie proves that the constructor copies all input fields
+// and generates a fresh UUID for the new movie.
 func TestCreateNewMovie(t *testing.T) {
 	input := CreateMovieInput{
 		Title:       "Interstellar",
@@ -16,6 +18,7 @@ func TestCreateNewMovie(t *testing.T) {
 
 	m := CreateNewMovie(input)
 
+	// uuid.Parse fails if the ID is not a real UUID string.
 	if _, err := uuid.Parse(m.ID); err != nil {
 		t.Fatalf("expected valid UUID, got %q: %v", m.ID, err)
 	}

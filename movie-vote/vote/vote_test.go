@@ -7,6 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// TestCreateNewVote proves that the constructor copies the poll/user/movie IDs
+// and generates a fresh UUID for the vote itself.
 func TestCreateNewVote(t *testing.T) {
 	input := CreateVoteInput{
 		PollID:   "poll-123",
@@ -16,6 +18,7 @@ func TestCreateNewVote(t *testing.T) {
 
 	v := CreateNewVote(input)
 
+	// uuid.Parse fails if the ID is not a real UUID string.
 	if _, err := uuid.Parse(v.ID); err != nil {
 		t.Fatalf("expected valid UUID, got %q: %v", v.ID, err)
 	}
