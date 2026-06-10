@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-// CreateMovieRequest Request body for creating a movie
+// CreateMovieRequest is the JSON body clients send when they add a movie to a poll.
 type CreateMovieRequest struct {
 	Title       string `json:"title"`
 	PollID      string `json:"pollId"`
@@ -14,7 +14,7 @@ type CreateMovieRequest struct {
 	Description string `json:"description"`
 }
 
-// CreateMovieResponse Response returned after creating a movie
+// CreateMovieResponse is the JSON response sent back after a movie is created.
 type CreateMovieResponse struct {
 	ID          string `json:"id"`
 	PollID      string `json:"pollId"`
@@ -24,10 +24,11 @@ type CreateMovieResponse struct {
 }
 
 // CreateMovieHandler handles POST /movies.
+// It creates a movie, makes sure the target poll exists, and attaches the movie to that poll.
 func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 	var req CreateMovieRequest
 
-	// Read request
+	// Decode the JSON request body into a Go struct.
 	decodeErr := json.NewDecoder(r.Body).Decode(&req)
 	if decodeErr != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -35,7 +36,7 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create movie
+	// Build the movie model before saving it.
 	createdMovie := movie.CreateNewMovie(movie.CreateMovieInput{
 		Title:       req.Title,
 		PollID:      req.PollID,
@@ -43,7 +44,7 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 		Description: req.Description,
 	})
 
-	// Find poll
+	// A movie must belong to an existing poll.
 	foundPoll, found := FindPollByID(req.PollID)
 
 	if !found {
@@ -51,13 +52,13 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Save movie
+	// Keep a global list of movies for GET /movies.
 	SaveMovie(createdMovie)
 
-	// Add movie to poll
+	// Also add the movie to its poll so voting validation can find it.
 	foundPoll.AddMovie(createdMovie)
 
-	// Build response
+	// Return the created movie data to the client.
 	response := CreateMovieResponse{
 		ID:          createdMovie.ID,
 		PollID:      createdMovie.PollID,
@@ -66,7 +67,7 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 		Description: createdMovie.Description,
 	}
 
-	// Send response
+	// Send 201 Created before writing the JSON body.
 	w.WriteHeader(http.StatusCreated)
 
 	encodeErr := json.NewEncoder(w).Encode(response)
@@ -77,27 +78,27 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// MoviesHandler Route requests to the correct handler
+// MoviesHandler routes /movies requests by HTTP method.
 func MoviesHandler(w http.ResponseWriter, r *http.Request) {
-	// Create movie
+	// POST /movies creates a new movie.
 	if r.Method == http.MethodPost {
 		CreateMovieHandler(w, r)
 		return
 	}
 
-	// List movies
+	// GET /movies lists every movie currently in memory.
 	if r.Method == http.MethodGet {
 		ListMoviesHandler(w, r)
 		return
 	}
 
-	// Reject unsupported methods
+	// Any other method is not supported for this route.
 	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 }
 
-// ListMoviesHandler Handle GET /movies
+// ListMoviesHandler handles GET /movies.
 func ListMoviesHandler(w http.ResponseWriter, r *http.Request) {
-	// Return all movies as JSON
+	// Return all movies as JSON.
 	err := json.NewEncoder(w).Encode(movies)
 	if err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)

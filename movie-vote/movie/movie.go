@@ -4,6 +4,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Movie represents one movie option that users can vote for in a poll.
 type Movie struct {
 	ID          string
 	PollID      string
@@ -12,6 +13,7 @@ type Movie struct {
 	Description string
 }
 
+// CreateMovieInput contains the data needed to create a movie.
 type CreateMovieInput struct {
 	Title       string
 	PollID      string
@@ -19,6 +21,7 @@ type CreateMovieInput struct {
 	Description string
 }
 
+// CreateNewMovie creates a Movie with a new unique ID.
 func CreateNewMovie(input CreateMovieInput) Movie {
 	return Movie{
 		ID:          uuid.New().String(),

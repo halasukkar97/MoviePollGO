@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-// CreatePollRequest Request body for creating a poll
+// CreatePollRequest is the JSON body clients send when they create a poll.
 type CreatePollRequest struct {
 	Name              string    `json:"name"`
 	MaxVotesPerPerson int       `json:"maxVotesPerPerson"`
 	Deadline          time.Time `json:"deadline"`
 }
 
-// CreatePollResponse Response returned after creating a poll
+// CreatePollResponse is the JSON response sent back after a poll is created.
 type CreatePollResponse struct {
 	ID                string    `json:"id"`
 	Name              string    `json:"name"`
@@ -23,11 +23,12 @@ type CreatePollResponse struct {
 	Deadline          time.Time `json:"deadline"`
 }
 
-// CreatePollHandler Handle POST /polls
+// CreatePollHandler handles POST /polls.
+// It reads JSON from the request, creates a poll model, stores it, and returns it.
 func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 	var req CreatePollRequest
 
-	// Read JSON request body
+	// Decode turns the incoming JSON request body into a Go struct.
 	decodeErr := json.NewDecoder(r.Body).Decode(&req)
 	if decodeErr != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -35,17 +36,17 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create poll object
+	// The poll package owns the rules for building a new poll.
 	createdPoll := poll.CreateNewPoll(poll.CreatePollInput{
 		Name:              req.Name,
 		MaxVotesPerPerson: req.MaxVotesPerPerson,
 		Deadline:          req.Deadline,
 	})
 
-	// Save poll in memory
+	// Save the poll so later requests can list it or add movies/votes to it.
 	SavePoll(createdPoll)
 
-	// Build response
+	// Only expose the fields the API should return to the client.
 	response := CreatePollResponse{
 		ID:                createdPoll.ID,
 		Name:              createdPoll.Name,
@@ -54,10 +55,10 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 		Deadline:          createdPoll.Deadline,
 	}
 
-	// Return 201 Created
+	// StatusCreated means the request succeeded and created a new resource.
 	w.WriteHeader(http.StatusCreated)
 
-	// Send JSON response
+	// Encode writes the Go response struct back to the client as JSON.
 	encodeErr := json.NewEncoder(w).Encode(response)
 	if encodeErr != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
@@ -66,27 +67,27 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// PollsHandler Route requests to the correct handler
+// PollsHandler routes /polls requests by HTTP method.
 func PollsHandler(w http.ResponseWriter, r *http.Request) {
-	// Create poll
+	// POST /polls creates a new poll.
 	if r.Method == http.MethodPost {
 		CreatePollHandler(w, r)
 		return
 	}
 
-	// List polls
+	// GET /polls lists the polls currently in memory.
 	if r.Method == http.MethodGet {
 		ListPollsHandler(w, r)
 		return
 	}
 
-	// Reject unsupported methods
+	// Any other method, such as PUT or DELETE, is not supported for this route.
 	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 }
 
-// ListPollsHandler Handle GET /polls
+// ListPollsHandler handles GET /polls.
 func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
-	// Return all polls as JSON
+	// Return all polls as JSON.
 	err := json.NewEncoder(w).Encode(GetAllPolls())
 	if err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
@@ -94,7 +95,10 @@ func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ResultsHandler handles GET /results?pollId=...
+// It finds the requested poll and returns vote totals keyed by movie ID.
 func ResultsHandler(w http.ResponseWriter, r *http.Request) {
+	// Query parameters come from the URL after the question mark.
 	pollID := r.URL.Query().Get("pollId")
 
 	foundPoll, found := FindPollByID(pollID)

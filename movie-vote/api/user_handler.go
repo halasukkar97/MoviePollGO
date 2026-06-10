@@ -7,21 +7,24 @@ import (
 	"net/http"
 )
 
-// CreateUserRequest is the request body for creating a user.
+// CreateUserRequest is the JSON body clients send when they create a user.
 type CreateUserRequest struct {
 	Name string `json:"name"`
 }
 
-// CreateUserResponse is returned after a user is created.
+// CreateUserResponse is the JSON response sent back after a user is created.
 type CreateUserResponse struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
 // CreateUserHandler handles POST /users.
+// It reads the new user's name, creates a user model, saves it in PostgreSQL,
+// and returns the created user data.
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
 
+	// Decode the incoming JSON request body into req.
 	decodeErr := json.NewDecoder(r.Body).Decode(&req)
 	if decodeErr != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -29,21 +32,25 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// The user package creates the ID and fills the user struct.
 	createdUser := user.CreateNewUser(user.CreateUserInput{
 		Name: req.Name,
 	})
 
+	// SaveUser writes the user to PostgreSQL, so this can fail if the DB is down.
 	err := SaveUser(createdUser)
 	if err != nil {
 		http.Error(w, "failed to save user", http.StatusInternalServerError)
 		return
 	}
 
+	// Build a response struct instead of exposing internal storage details.
 	response := CreateUserResponse{
 		ID:   createdUser.ID,
 		Name: createdUser.Name,
 	}
 
+	// Send 201 Created and then write the response as JSON.
 	w.WriteHeader(http.StatusCreated)
 	encodeErr := json.NewEncoder(w).Encode(response)
 	if encodeErr != nil {
@@ -55,20 +62,24 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 // UsersHandler routes requests to the correct user handler.
 func UsersHandler(w http.ResponseWriter, r *http.Request) {
+	// POST /users creates a new user.
 	if r.Method == http.MethodPost {
 		CreateUserHandler(w, r)
 		return
 	}
 
+	// GET /users lists users from PostgreSQL.
 	if r.Method == http.MethodGet {
 		ListUsersHandler(w, r)
 		return
 	}
 
+	// Any other method is not supported for this route.
 	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 }
 
-// return all users as a json file 
+// ListUsersHandler handles GET /users.
+// It loads all users from PostgreSQL and returns them as JSON.
 func ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 	users, err := GetAllUsers()
 
@@ -80,6 +91,7 @@ func ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
+// GetAllUsers reads every user row from PostgreSQL and converts each row into a user.User.
 func GetAllUsers() ([]user.User, error) {
 
 	rows, err := database.DB.Query(
@@ -94,9 +106,11 @@ func GetAllUsers() ([]user.User, error) {
 
 	var users []user.User
 
+	// rows.Next moves through the result set one database row at a time.
 	for rows.Next() {
 		var currentUser user.User
 
+		// Scan copies the current row's columns into Go variables.
 		err := rows.Scan(
 			&currentUser.ID,
 			&currentUser.Name,

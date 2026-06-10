@@ -6,12 +6,14 @@ import (
 	"net/http"
 )
 
+// createVoteRequest is the JSON body clients send when they vote in a poll.
 type createVoteRequest struct {
 	MovieIDs []string `json:"movieIds"`
 	PollID   string   `json:"pollId"`
 	UserID   string   `json:"userId"`
 }
 
+// createVoteResponse is the JSON response sent back after a vote is accepted.
 type createVoteResponse struct {
 	ID       string   `json:"id"`
 	PollID   string   `json:"pollId"`
@@ -19,10 +21,12 @@ type createVoteResponse struct {
 	MovieIDs []string `json:"movieIds"`
 }
 
+// CreateVoteHandler handles POST /votes.
+// It creates a vote, asks the poll to validate it, stores it, and returns it.
 func CreateVoteHandler(w http.ResponseWriter, r *http.Request) {
 	var req createVoteRequest
 
-	// Read request
+	// Decode the JSON request body into a Go struct.
 	decodeErr := json.NewDecoder(r.Body).Decode(&req)
 	if decodeErr != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -30,12 +34,14 @@ func CreateVoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Build the vote model from the request data.
 	createdVote := vote.CreateNewVote(vote.CreateVoteInput{
 		PollID:   req.PollID,
 		UserID:   req.UserID,
 		MovieIDs: req.MovieIDs,
 	})
 
+	// A vote can only be submitted to an existing poll.
 	foundPoll, found := FindPollByID(req.PollID)
 
 	if !found {
@@ -43,12 +49,14 @@ func CreateVoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// SubmitVote checks the poll rules before adding the vote to the poll.
 	submitErr := foundPoll.SubmitVote(createdVote)
 	if submitErr != nil {
 		http.Error(w, submitErr.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Keep a global vote list as well as the vote stored inside the poll.
 	SaveVote(createdVote)
 
 	response := createVoteResponse{
