@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"movie-vote/database"
 	"movie-vote/poll"
 	"net/http"
 	"time"
@@ -43,8 +44,12 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 		Deadline:          req.Deadline,
 	})
 
-	// Save the poll so later requests can list it or add movies/votes to it.
-	SavePoll(createdPoll)
+	// Save the poll in PostgreSQL so later requests can list or find it.
+	err := SavePoll(createdPoll)
+	if err != nil {
+		http.Error(w, "failed to save poll", http.StatusInternalServerError)
+		return
+	}
 
 	// Only expose the fields the API should return to the client.
 	response := CreatePollResponse{
@@ -75,7 +80,7 @@ func PollsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// GET /polls lists the polls currently in memory.
+	// GET /polls lists the polls stored in PostgreSQL.
 	if r.Method == http.MethodGet {
 		ListPollsHandler(w, r)
 		return
@@ -83,16 +88,6 @@ func PollsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Any other method, such as PUT or DELETE, is not supported for this route.
 	http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-}
-
-// ListPollsHandler handles GET /polls.
-func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
-	// Return all polls as JSON.
-	err := json.NewEncoder(w).Encode(GetAllPolls())
-	if err != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-		return
-	}
 }
 
 // ResultsHandler handles GET /results?pollId=...
@@ -115,4 +110,55 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 		return
 	}
+}
+
+// ListPollsHandler handles GET /polls.
+func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
+	// Load all stored polls before encoding them as JSON.
+	polls, err := GetAllPolls()
+
+	if err != nil {
+		http.Error(w, "failed to load polls", http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(polls)
+}
+
+// GetAllPolls reads every poll row from PostgreSQL and converts each row into a poll.Poll.
+func GetAllPolls() ([]poll.Poll, error) {
+	// Query returns rows, which must be scanned one at a time.
+	rows, err := database.DB.Query(
+		"SELECT id, name, is_closed, max_votes_per_person, deadline FROM polls",
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var polls []poll.Poll
+
+	// rows.Next moves through the result set one database row at a time.
+	for rows.Next() {
+		var currentPoll poll.Poll
+
+		// Scan copies the current row's columns into the poll struct fields.
+		err := rows.Scan(
+			&currentPoll.ID,
+			&currentPoll.Name,
+			&currentPoll.IsClosed,
+			&currentPoll.MaxVotesPerPerson,
+			&currentPoll.Deadline,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		polls = append(polls, currentPoll)
+	}
+
+	return polls, nil
 }
