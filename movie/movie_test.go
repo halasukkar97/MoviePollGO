@@ -14,6 +14,7 @@ func TestCreateNewMovie(t *testing.T) {
 		PollID:      "poll-123",
 		ReleaseYear: 2014,
 		Description: "Space exploration",
+		PosterURL:   "https://image.test/interstellar.jpg",
 	}
 
 	m := CreateNewMovie(input)
@@ -37,5 +38,9 @@ func TestCreateNewMovie(t *testing.T) {
 
 	if m.Description != input.Description {
 		t.Errorf("expected description %q, got %q", input.Description, m.Description)
+	}
+
+	if m.PosterURL != input.PosterURL {
+		t.Errorf("expected poster URL %q, got %q", input.PosterURL, m.PosterURL)
 	}
 }

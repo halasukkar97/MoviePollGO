@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"votify/database"
@@ -13,6 +14,7 @@ type CreateMovieRequest struct {
 	PollID      string `json:"pollId"`
 	ReleaseYear int    `json:"releaseYear"`
 	Description string `json:"description"`
+	PosterURL   string `json:"posterUrl"`
 }
 
 // CreateMovieResponse is the JSON response sent back after a movie is created.
@@ -22,6 +24,7 @@ type CreateMovieResponse struct {
 	Title       string `json:"title"`
 	ReleaseYear int    `json:"releaseYear"`
 	Description string `json:"description"`
+	PosterURL   string `json:"posterUrl"`
 }
 
 // CreateMovieHandler handles POST /movies.
@@ -44,6 +47,7 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 		PollID:      req.PollID,
 		ReleaseYear: req.ReleaseYear,
 		Description: req.Description,
+		PosterURL:   req.PosterURL,
 	})
 
 	// A movie must point to an existing poll, so check that before saving.
@@ -72,6 +76,7 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 		Title:       createdMovie.Title,
 		ReleaseYear: createdMovie.ReleaseYear,
 		Description: createdMovie.Description,
+		PosterURL:   createdMovie.PosterURL,
 	}
 
 	// Send 201 Created before writing the JSON body.
@@ -120,42 +125,21 @@ func ListMoviesHandler(w http.ResponseWriter, r *http.Request) {
 func GetAllMovies() ([]movie.Movie, error) {
 	// Query returns rows, which must be scanned one at a time.
 	rows, err := database.DB.Query(
-		"SELECT id, poll_id, title, release_year, description FROM movies",
+		"SELECT id, poll_id, title, release_year, description, COALESCE(poster_url, '') AS poster_url FROM movies",
 	)
 
 	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var movies []movie.Movie
-
-	// rows.Next moves through the result set one database row at a time.
-	for rows.Next() {
-		var currentMovie movie.Movie
-
-		// Scan copies the current row's columns into the movie struct fields.
-		err := rows.Scan(
-			&currentMovie.ID,
-			&currentMovie.PollID,
-			&currentMovie.Title,
-			&currentMovie.ReleaseYear,
-			&currentMovie.Description,
+		rows, err = database.DB.Query(
+			"SELECT id, poll_id, title, release_year, description FROM movies",
 		)
-
 		if err != nil {
 			return nil, err
 		}
 
-		movies = append(movies, currentMovie)
+		return scanMovieRows(rows, false)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return movies, nil
+	return scanMovieRows(rows, true)
 }
 
 // GetMoviesByPollID reads only the movies that belong to one poll.
@@ -163,14 +147,26 @@ func GetAllMovies() ([]movie.Movie, error) {
 func GetMoviesByPollID(pollID string) ([]movie.Movie, error) {
 	// The WHERE clause filters the movies table down to the requested poll ID.
 	rows, err := database.DB.Query(
-		"SELECT id, poll_id, title, release_year, description FROM movies WHERE poll_id = $1",
+		"SELECT id, poll_id, title, release_year, description, COALESCE(poster_url, '') AS poster_url FROM movies WHERE poll_id = $1",
 		pollID,
 	)
 
 	if err != nil {
-		return nil, err
+		rows, err = database.DB.Query(
+			"SELECT id, poll_id, title, release_year, description FROM movies WHERE poll_id = $1",
+			pollID,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return scanMovieRows(rows, false)
 	}
 
+	return scanMovieRows(rows, true)
+}
+
+func scanMovieRows(rows *sql.Rows, hasPosterURL bool) ([]movie.Movie, error) {
 	defer rows.Close()
 
 	var movies []movie.Movie
@@ -178,14 +174,26 @@ func GetMoviesByPollID(pollID string) ([]movie.Movie, error) {
 	// Build one movie struct for each returned database row.
 	for rows.Next() {
 		var currentMovie movie.Movie
+		var err error
 
-		err := rows.Scan(
-			&currentMovie.ID,
-			&currentMovie.PollID,
-			&currentMovie.Title,
-			&currentMovie.ReleaseYear,
-			&currentMovie.Description,
-		)
+		if hasPosterURL {
+			err = rows.Scan(
+				&currentMovie.ID,
+				&currentMovie.PollID,
+				&currentMovie.Title,
+				&currentMovie.ReleaseYear,
+				&currentMovie.Description,
+				&currentMovie.PosterURL,
+			)
+		} else {
+			err = rows.Scan(
+				&currentMovie.ID,
+				&currentMovie.PollID,
+				&currentMovie.Title,
+				&currentMovie.ReleaseYear,
+				&currentMovie.Description,
+			)
+		}
 
 		if err != nil {
 			return nil, err

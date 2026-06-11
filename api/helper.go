@@ -1,6 +1,8 @@
 package api
 
 import (
+	"database/sql"
+	"log"
 	"votify/database"
 	"votify/movie"
 	"votify/poll"
@@ -11,28 +13,50 @@ import (
 // FindPollByID searches for a poll by the internal UUID.
 // This ID is mainly for the database and backend relations.
 func FindPollByID(pollID string) (*poll.Poll, bool) {
-	return findPollByColumn("id", pollID)
+	foundPoll, found, err := findPollByID(pollID)
+	if err != nil {
+		log.Printf("FindPollByID failed for identifier %q: %v", pollID, err)
+	}
+
+	return foundPoll, found
 }
 
 // FindPollByCode searches for a poll by the public 8-digit poll code.
 // This is the code users will type when they join a poll.
 func FindPollByCode(pollCode string) (*poll.Poll, bool) {
-	return findPollByColumn("poll_code", pollCode)
+	foundPoll, found, err := findPollByCode(pollCode)
+	if err != nil {
+		log.Printf("FindPollByCode failed for identifier %q: %v", pollCode, err)
+	}
+
+	return foundPoll, found
 }
 
-// findPollByColumn loads a poll by one allowed database column.
-// We keep this helper private so callers cannot pass random SQL columns.
-func findPollByColumn(column string, value string) (*poll.Poll, bool) {
+func findPollByID(pollID string) (*poll.Poll, bool, error) {
+	return findPollByQuery(
+		`SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, max_votes_per_person, deadline
+		FROM polls
+		WHERE id = $1`,
+		pollID,
+	)
+}
+
+func findPollByCode(pollCode string) (*poll.Poll, bool, error) {
+	return findPollByQuery(
+		`SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, max_votes_per_person, deadline
+		FROM polls
+		WHERE poll_code = $1`,
+		pollCode,
+	)
+}
+
+// findPollByQuery loads a poll using one of the fixed poll lookup queries.
+func findPollByQuery(query string, value string) (*poll.Poll, bool, error) {
 	var foundPoll poll.Poll
 
 	// QueryRow expects one row back. Scan copies each selected database column
 	// into the matching field on foundPoll.
-	err := database.DB.QueryRow(
-		`SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, max_votes_per_person, deadline
-		FROM polls
-		WHERE `+column+` = $1`,
-		value,
-	).Scan(
+	err := database.DB.QueryRow(query, value).Scan(
 		&foundPoll.ID,
 		&foundPoll.PollCode,
 		&foundPoll.Name,
@@ -42,24 +66,28 @@ func findPollByColumn(column string, value string) (*poll.Poll, bool) {
 	)
 
 	if err != nil {
-		return nil, false
+		if err == sql.ErrNoRows {
+			return nil, false, nil
+		}
+
+		return nil, false, err
 	}
 
 	// A single poll response should include its related movies and votes.
 	movies, err := GetMoviesByPollID(foundPoll.ID)
 	if err != nil {
-		return nil, false
+		return nil, false, err
 	}
 
 	votes, err := GetVotesByPollID(foundPoll.ID)
 	if err != nil {
-		return nil, false
+		return nil, false, err
 	}
 
 	foundPoll.Votes = votes
 	foundPoll.Movies = movies
 
-	return &foundPoll, true
+	return &foundPoll, true, nil
 }
 
 // SavePoll stores a newly created poll in PostgreSQL.
@@ -102,13 +130,14 @@ func PollCodeExists(pollCode string) (bool, error) {
 func SaveMovie(movie movie.Movie) error {
 	_, err := database.DB.Exec(
 		`INSERT INTO movies
-		(id, poll_id, title, release_year, description)
-		VALUES ($1, $2, $3, $4, $5)`,
+		(id, poll_id, title, release_year, description, poster_url)
+		VALUES ($1, $2, $3, $4, $5, $6)`,
 		movie.ID,
 		movie.PollID,
 		movie.Title,
 		movie.ReleaseYear,
 		movie.Description,
+		movie.PosterURL,
 	)
 
 	return err

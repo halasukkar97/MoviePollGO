@@ -67,6 +67,35 @@ func TestSavePollWritesPollToDatabase(t *testing.T) {
 	requireExpectations(t, mock)
 }
 
+func TestFindPollByCodeUsesPollCodeColumn(t *testing.T) {
+	_, mock := newMockDatabase(t)
+	deadline := time.Now().Add(24 * time.Hour)
+
+	mock.ExpectQuery(`SELECT id, COALESCE\(poll_code, ''\) AS poll_code, name, is_closed, max_votes_per_person, deadline\s+FROM polls\s+WHERE poll_code = \$1`).
+		WithArgs("03739172").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id",
+			"poll_code",
+			"name",
+			"is_closed",
+			"max_votes_per_person",
+			"deadline",
+		}).AddRow("poll-1", "03739172", "Movie Night", false, 2, deadline))
+
+	expectEmptyRelations(mock, "poll-1")
+
+	foundPoll, found := FindPollByCode("03739172")
+	if !found {
+		t.Fatal("expected FindPollByCode to find the poll")
+	}
+
+	if foundPoll.ID != "poll-1" || foundPoll.PollCode != "03739172" {
+		t.Fatalf("unexpected poll returned: %+v", foundPoll)
+	}
+
+	requireExpectations(t, mock)
+}
+
 func TestSaveMovieWritesMovieToDatabase(t *testing.T) {
 	_, mock := newMockDatabase(t)
 	m := movie.Movie{
@@ -75,10 +104,11 @@ func TestSaveMovieWritesMovieToDatabase(t *testing.T) {
 		Title:       "Dune",
 		ReleaseYear: 2021,
 		Description: "Desert politics",
+		PosterURL:   "https://image.test/dune.jpg",
 	}
 
 	mock.ExpectExec("INSERT INTO movies").
-		WithArgs(m.ID, m.PollID, m.Title, m.ReleaseYear, m.Description).
+		WithArgs(m.ID, m.PollID, m.Title, m.ReleaseYear, m.Description, m.PosterURL).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := SaveMovie(m); err != nil {

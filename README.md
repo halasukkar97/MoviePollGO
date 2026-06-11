@@ -48,6 +48,7 @@ CREATE TABLE users (
 
 CREATE TABLE polls (
   id TEXT PRIMARY KEY,
+  poll_code  TEXT NOT NULL,
   name TEXT NOT NULL,
   is_closed BOOLEAN NOT NULL,
   max_votes_per_person INTEGER NOT NULL,
@@ -59,7 +60,8 @@ CREATE TABLE movies (
   poll_id TEXT NOT NULL REFERENCES polls(id),
   title TEXT NOT NULL,
   release_year INTEGER NOT NULL,
-  description TEXT
+  description TEXT,
+  poster_url TEXT
 );
 
 CREATE TABLE votes (
@@ -73,6 +75,12 @@ CREATE TABLE vote_movies (
   movie_id TEXT NOT NULL REFERENCES movies(id),
   PRIMARY KEY (vote_id, movie_id)
 );
+```
+
+For an existing database created before movie posters were added, run:
+
+```sql
+ALTER TABLE movies ADD COLUMN IF NOT EXISTS poster_url TEXT;
 ```
 
 ## Run

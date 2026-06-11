@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"votify/database"
+	"votify/poll"
 	"votify/vote"
 )
 
@@ -38,9 +39,11 @@ func CreateVoteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// A vote can only be submitted to an existing poll.
-	foundPoll, found := FindPollByCode(req.PollCode)
-	if req.PollCode == "" {
-		foundPoll, found = nil, false
+	var foundPoll *poll.Poll
+	var found bool
+
+	if req.PollCode != "" {
+		foundPoll, found = FindPollByCode(req.PollCode)
 	}
 	if !found && req.PollID != "" {
 		foundPoll, found = FindPollByID(req.PollID)

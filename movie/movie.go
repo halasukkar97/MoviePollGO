@@ -11,6 +11,7 @@ type Movie struct {
 	Title       string
 	ReleaseYear int
 	Description string
+	PosterURL   string
 }
 
 // CreateMovieInput contains the data needed to create a movie.
@@ -19,6 +20,7 @@ type CreateMovieInput struct {
 	PollID      string
 	ReleaseYear int
 	Description string
+	PosterURL   string
 }
 
 // CreateNewMovie creates a Movie with a new unique ID.
@@ -29,5 +31,6 @@ func CreateNewMovie(input CreateMovieInput) Movie {
 		Title:       input.Title,
 		ReleaseYear: input.ReleaseYear,
 		Description: input.Description,
+		PosterURL:   input.PosterURL,
 	}
 }

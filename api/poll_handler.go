@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/big"
 	"net/http"
 	"strings"
@@ -110,9 +111,11 @@ func ResultsHandler(w http.ResponseWriter, r *http.Request) {
 	pollCode := r.URL.Query().Get("pollCode")
 	pollID := r.URL.Query().Get("pollId")
 
-	foundPoll, found := FindPollByCode(pollCode)
-	if pollCode == "" {
-		foundPoll, found = nil, false
+	var foundPoll *poll.Poll
+	var found bool
+
+	if pollCode != "" {
+		foundPoll, found = FindPollByCode(pollCode)
 	}
 	if !found && pollID != "" {
 		foundPoll, found = FindPollByID(pollID)
@@ -138,6 +141,7 @@ func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
 	polls, err := GetAllPolls()
 
 	if err != nil {
+		log.Printf("failed to load polls: %v", err)
 		http.Error(w, "failed to load polls", http.StatusInternalServerError)
 		return
 	}
@@ -210,9 +214,13 @@ func GetAllPolls() ([]poll.Poll, error) {
 func PollByIDHandler(w http.ResponseWriter, r *http.Request) {
 	pollIdentifier := strings.TrimPrefix(r.URL.Path, "/polls/")
 
-	foundPoll, found := FindPollByCode(pollIdentifier)
+	foundPoll, found, codeErr := findPollByCode(pollIdentifier)
 	if !found {
-		foundPoll, found = FindPollByID(pollIdentifier)
+		var idErr error
+		foundPoll, found, idErr = findPollByID(pollIdentifier)
+		if !found {
+			log.Printf("poll not found for identifier %q: pollCodeErr=%v pollIDErr=%v", pollIdentifier, codeErr, idErr)
+		}
 	}
 
 	if !found {
