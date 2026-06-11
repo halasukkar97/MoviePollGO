@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { apiClient } from '../../api/client';
 import { usePageTitle } from '../../hooks/usePageTitle';
-import type { ExternalMovie } from '../../api/client';
+import type { ExternalMovie, Movie, PollResults } from '../../api/client';
 import type {
   LoadedPollState,
   MovieDraftValues,
@@ -27,6 +27,9 @@ const initialMovieSearch: MovieSearchState = {
 };
 
 const toastDurationMs = 30000;
+const userNameStorageKey = 'votify:userName';
+const userIDStorageKey = 'votify:userId';
+const userIDNameStorageKey = 'votify:userIdName';
 
 function hasVotingEnded(deadline: string, isClosed: boolean) {
   return isClosed || (deadline ? new Date(deadline).getTime() < Date.now() : false);
@@ -48,6 +51,18 @@ function getExternalPosterURL(movie: ExternalMovie) {
   return movie.poster_url ?? movie.posterUrl ?? '';
 }
 
+function countVotesForMovie(movieID: string, votes: { movieIds: string[] }[]) {
+  return votes.reduce((total, vote) => total + (vote.movieIds.includes(movieID) ? 1 : 0), 0);
+}
+
+function formatVoteCount(template: string, count: number) {
+  return template.replace('{count}', String(count));
+}
+
+function formatSelectedCount(template: string, selected: number, max: number) {
+  return template.replace('{selected}', String(selected)).replace('{max}', String(max));
+}
+
 // PollPage shows one public poll by pollCode and will become the voting workspace.
 export function PollPage({ t }: PollPageProps) {
   const { pollCode = '' } = useParams();
@@ -62,6 +77,16 @@ export function PollPage({ t }: PollPageProps) {
   const [movieDraft, setMovieDraft] = useState<MovieDraftValues>(initialMovieDraft);
   const [movieSearch, setMovieSearch] = useState<MovieSearchState>(initialMovieSearch);
   const [isAddingMovie, setIsAddingMovie] = useState(false);
+  const [selectedMovieIds, setSelectedMovieIds] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState(() => {
+    const savedName = localStorage.getItem(userNameStorageKey) ?? '';
+    const userIDName = localStorage.getItem(userIDNameStorageKey) ?? '';
+    return savedName && savedName === userIDName ? localStorage.getItem(userIDStorageKey) ?? '' : '';
+  });
+  const [voteLimitMessage, setVoteLimitMessage] = useState('');
+  const [pollResults, setPollResults] = useState<PollResults>({});
+  const [isVoteConfirmOpen, setIsVoteConfirmOpen] = useState(false);
+  const [isSubmittingVote, setIsSubmittingVote] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(
     routeState?.createdPollCode
       ? {
@@ -80,6 +105,29 @@ export function PollPage({ t }: PollPageProps) {
     [pollState.poll],
   );
 
+  const currentUserVote = useMemo(
+    () => pollState.poll?.votes.find((vote) => vote.userId === currentUserId) ?? null,
+    [currentUserId, pollState.poll],
+  );
+
+  const displayedSelectedMovieIds = currentUserVote?.movieIds ?? selectedMovieIds;
+  const hasAlreadyVoted = Boolean(currentUserVote);
+
+  const sortedMovies = useMemo(() => {
+    if (!pollState.poll) {
+      return [] as Movie[];
+    }
+
+    return pollState.poll.movies
+      .map((movie, index) => ({
+        movie,
+        index,
+        voteCount: pollResults[movie.id] ?? countVotesForMovie(movie.id, pollState.poll?.votes ?? []),
+      }))
+      .sort((left, right) => right.voteCount - left.voteCount || left.index - right.index)
+      .map((entry) => entry.movie);
+  }, [pollResults, pollState.poll]);
+
   // Toasts stay visible long enough to copy details, then close themselves.
   useEffect(() => {
     if (!toast) {
@@ -90,6 +138,32 @@ export function PollPage({ t }: PollPageProps) {
     return () => window.clearTimeout(timeoutID);
   }, [toast]);
 
+  // The saved display name gets a backend user ID before voting.
+  useEffect(() => {
+    async function ensureUserID() {
+      if (currentUserId) {
+        return;
+      }
+
+      const savedName = localStorage.getItem(userNameStorageKey)?.trim();
+      const userIDName = localStorage.getItem(userIDNameStorageKey) ?? '';
+      if (!savedName || savedName === userIDName) {
+        return;
+      }
+
+      try {
+        const user = await apiClient.createUser({ name: savedName });
+        localStorage.setItem(userIDStorageKey, user.id);
+        localStorage.setItem(userIDNameStorageKey, savedName);
+        setCurrentUserId(user.id);
+      } catch {
+        setCurrentUserId('');
+      }
+    }
+
+    ensureUserID();
+  }, [currentUserId]);
+
   // loadPoll fetches the public poll by pollCode from the route.
   useEffect(() => {
     async function loadPoll() {
@@ -97,6 +171,8 @@ export function PollPage({ t }: PollPageProps) {
 
       try {
         const poll = await apiClient.getPoll(pollCode);
+        const results = await apiClient.getPollResults(pollCode);
+        setPollResults(results);
         setPollState({ poll, isLoading: false, errorMessage: '' });
       } catch (error) {
         setPollState({
@@ -160,7 +236,26 @@ export function PollPage({ t }: PollPageProps) {
 
   async function refreshPoll() {
     const poll = await apiClient.getPoll(pollCode);
+    const results = await apiClient.getPollResults(pollCode);
+    setPollResults(results);
     setPollState({ poll, isLoading: false, errorMessage: '' });
+  }
+
+  async function getOrCreateCurrentUserID() {
+    if (currentUserId) {
+      return currentUserId;
+    }
+
+    const savedName = localStorage.getItem(userNameStorageKey)?.trim();
+    if (!savedName) {
+      throw new Error(t('poll.missingVoterName'));
+    }
+
+    const user = await apiClient.createUser({ name: savedName });
+    localStorage.setItem(userIDStorageKey, user.id);
+    localStorage.setItem(userIDNameStorageKey, savedName);
+    setCurrentUserId(user.id);
+    return user.id;
   }
 
   function showToast(nextToast: Omit<ToastState, 'id'>) {
@@ -187,6 +282,63 @@ export function PollPage({ t }: PollPageProps) {
       searchError: '',
       hasSearched: true,
     });
+  }
+
+  function handleToggleMovie(movieID: string) {
+    if (votingEnded || hasAlreadyVoted) {
+      return;
+    }
+
+    setVoteLimitMessage('');
+    setSelectedMovieIds((currentMovieIds) => {
+      if (currentMovieIds.includes(movieID)) {
+        return currentMovieIds.filter((selectedMovieID) => selectedMovieID !== movieID);
+      }
+
+      const maxVotes = pollState.poll?.maxVotesPerPerson ?? 0;
+      if (currentMovieIds.length >= maxVotes) {
+        setVoteLimitMessage(formatVoteCount(t('poll.maxVotesMessage'), maxVotes));
+        return currentMovieIds;
+      }
+
+      return [...currentMovieIds, movieID];
+    });
+  }
+
+  function handleOpenVoteConfirm() {
+    if (selectedMovieIds.length === 0 || votingEnded || hasAlreadyVoted) {
+      return;
+    }
+
+    setIsVoteConfirmOpen(true);
+  }
+
+  async function handleConfirmVote() {
+    if (!pollState.poll) {
+      return;
+    }
+
+    setIsSubmittingVote(true);
+
+    try {
+      const userId = await getOrCreateCurrentUserID();
+      await apiClient.submitVote({
+        pollCode: pollState.poll.pollCode,
+        userId,
+        movieIds: selectedMovieIds,
+      });
+      setIsVoteConfirmOpen(false);
+      setSelectedMovieIds([]);
+      await refreshPoll();
+      showToast({ type: 'success', message: t('poll.voteSubmitSuccess') });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : t('poll.voteSubmitError'),
+      });
+    } finally {
+      setIsSubmittingVote(false);
+    }
   }
 
   // handleAddMovie sends the selected TMDB movie to the backend create movie endpoint.
@@ -260,15 +412,27 @@ export function PollPage({ t }: PollPageProps) {
         <div className="poll-title-block">
           <h1>{pollState.poll.name}</h1>
         </div>
-        <div className="poll-meta-card">
-          <div className="poll-meta-item">
-            <span>{t('poll.code')}</span>
-            <strong><code>{pollState.poll.pollCode}</code></strong>
+        <div className="poll-side-panel">
+          <div className="poll-meta-card">
+            <div className="poll-meta-item">
+              <span>{t('poll.code')}</span>
+              <strong><code>{pollState.poll.pollCode}</code></strong>
+            </div>
+            <div className="poll-meta-divider" />
+            <div className="poll-meta-item">
+              <span>{t('poll.endVotingOn')}</span>
+              <strong>{formatDate(pollState.poll.deadline)}</strong>
+            </div>
           </div>
-          <div className="poll-meta-divider" />
-          <div className="poll-meta-item">
-            <span>{t('poll.endVotingOn')}</span>
-            <strong>{formatDate(pollState.poll.deadline)}</strong>
+          <div className="vote-submit-panel">
+            <span>{formatSelectedCount(t('poll.selectedCount'), displayedSelectedMovieIds.length, pollState.poll.maxVotesPerPerson)}</span>
+            <button
+              type="button"
+              disabled={selectedMovieIds.length === 0 || votingEnded || hasAlreadyVoted || isSubmittingVote}
+              onClick={handleOpenVoteConfirm}
+            >
+              {t('poll.submitVotes')}
+            </button>
           </div>
         </div>
       </div>
@@ -276,6 +440,18 @@ export function PollPage({ t }: PollPageProps) {
       {votingEnded ? (
         <div className="feedback expired-message" role="status">
           {t('poll.votingEnded')}
+        </div>
+      ) : null}
+
+      {hasAlreadyVoted ? (
+        <div className="feedback already-voted-message" role="status">
+          {t('poll.alreadyVoted')}
+        </div>
+      ) : null}
+
+      {voteLimitMessage ? (
+        <div className="feedback vote-limit-message" role="alert">
+          {voteLimitMessage}
         </div>
       ) : null}
 
@@ -335,14 +511,26 @@ export function PollPage({ t }: PollPageProps) {
         <section className="movie-grid-section">
           <h2>{t('poll.moviesInPoll')}</h2>
           <div className="movie-grid">
-            {pollState.poll.movies.length > 0 ? (
-              pollState.poll.movies.map((movie) => {
+            {sortedMovies.length > 0 ? (
+              sortedMovies.map((movie) => {
                 const poster = movie.posterUrl;
                 const releaseYear = movie.releaseYear;
                 const description = movie.description;
+                const voteCount = pollResults[movie.id] ?? countVotesForMovie(movie.id, pollState.poll?.votes ?? []);
+                const isSelected = displayedSelectedMovieIds.includes(movie.id);
+                const isSelectionDisabled = votingEnded || hasAlreadyVoted;
 
                 return (
-                  <article className="movie-card" key={movie.id}>
+                  <article className={isSelected ? 'movie-card movie-card--selected' : 'movie-card'} key={movie.id}>
+                    <label className="movie-select-control">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isSelectionDisabled}
+                        onChange={() => handleToggleMovie(movie.id)}
+                      />
+                      <span aria-hidden="true">✓</span>
+                    </label>
                     <div className="movie-card-poster">
                       {poster ? <img src={poster} alt={t('poll.posterAlt')} /> : <span>{t('poll.noPoster')}</span>}
                     </div>
@@ -351,8 +539,8 @@ export function PollPage({ t }: PollPageProps) {
                         <h3>{movie.title}</h3>
                         {releaseYear ? <span>{releaseYear}</span> : null}
                       </div>
+                      <span className="vote-count-badge">{formatVoteCount(t('poll.votesLabel'), voteCount)}</span>
                       {description ? <p>{description}</p> : null}
-                      {!votingEnded ? <button type="button">{t('poll.voteButton')}</button> : null}
                     </div>
                   </article>
                 );
@@ -363,6 +551,23 @@ export function PollPage({ t }: PollPageProps) {
           </div>
         </section>
       </section>
+
+      {isVoteConfirmOpen ? (
+        <div className="vote-modal-backdrop" role="presentation">
+          <div className="vote-modal" role="dialog" aria-modal="true" aria-labelledby="vote-confirm-title">
+            <h2 id="vote-confirm-title">{t('poll.confirmVoteTitle')}</h2>
+            <p>{t('poll.confirmVoteMessage')}</p>
+            <div className="vote-modal-actions">
+              <button type="button" className="secondary-button" onClick={() => setIsVoteConfirmOpen(false)}>
+                {t('poll.cancel')}
+              </button>
+              <button type="button" disabled={isSubmittingVote} onClick={handleConfirmVote}>
+                {t('poll.submitVotes')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

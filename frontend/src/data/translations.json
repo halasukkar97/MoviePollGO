@@ -75,7 +75,18 @@
     "history.openPoll": "Open poll",
     "history.missingPollCode": "Missing poll code",
     "poll.moviesInPoll": "Movies in this poll",
-    "poll.noPoster": "No poster"
+    "poll.noPoster": "No poster",
+    "poll.submitVotes": "Submit votes",
+    "poll.confirmVoteTitle": "Submit votes?",
+    "poll.confirmVoteMessage": "You won’t be able to change your votes. Are you sure?",
+    "poll.cancel": "Cancel",
+    "poll.voteSubmitSuccess": "Your votes were submitted.",
+    "poll.voteSubmitError": "Could not submit votes.",
+    "poll.maxVotesMessage": "You can select up to {count} movies.",
+    "poll.alreadyVoted": "You already voted in this poll.",
+    "poll.votesLabel": "{count} votes",
+    "poll.selectedCount": "{selected} of {max} selected",
+    "poll.missingVoterName": "Enter your name before voting."
   },
   "de": {
     "app.brand": "Votify",
@@ -153,6 +164,17 @@
     "history.openPoll": "Umfrage öffnen",
     "history.missingPollCode": "Umfragecode fehlt",
     "poll.moviesInPoll": "Filme in dieser Umfrage",
-    "poll.noPoster": "Kein Poster"
+    "poll.noPoster": "Kein Poster",
+    "poll.submitVotes": "Stimmen abgeben",
+    "poll.confirmVoteTitle": "Stimmen abgeben?",
+    "poll.confirmVoteMessage": "Du kannst deine Stimmen danach nicht mehr ändern. Bist du sicher?",
+    "poll.cancel": "Abbrechen",
+    "poll.voteSubmitSuccess": "Deine Stimmen wurden abgegeben.",
+    "poll.voteSubmitError": "Stimmen konnten nicht abgegeben werden.",
+    "poll.maxVotesMessage": "Du kannst bis zu {count} Filme auswählen.",
+    "poll.alreadyVoted": "Du hast in dieser Umfrage bereits abgestimmt.",
+    "poll.votesLabel": "{count} Stimmen",
+    "poll.selectedCount": "{selected} von {max} ausgewählt",
+    "poll.missingVoterName": "Gib deinen Namen ein, bevor du abstimmst."
   }
 }

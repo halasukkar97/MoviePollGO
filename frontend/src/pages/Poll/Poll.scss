@@ -1,15 +1,23 @@
 .poll-page {
   .poll-heading {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
-    gap: 24px;
-    align-items: start;
+    position: relative;
+    display: block;
   }
 
   .poll-title-block {
     display: grid;
+    width: min(50%, 640px);
     gap: 8px;
     padding-top: 6px;
+  }
+
+  .poll-side-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    width: min(50%, 520px);
+    gap: 14px;
   }
 
   .poll-meta-card {
@@ -54,6 +62,7 @@
   }
 
   .feedback {
+    width: min(50%, 640px);
     padding: 12px 14px;
     border-radius: 6px;
   }
@@ -65,6 +74,7 @@
 
   .movie-search-form {
     position: relative;
+    width: min(50%, 640px);
     gap: 8px;
     padding: 18px;
     border: 1px solid #dde2e7;
@@ -150,6 +160,7 @@
   }
 
   .movie-card {
+    position: relative;
     display: grid;
     grid-template-rows: auto 1fr;
     overflow: hidden;
@@ -164,6 +175,60 @@
     transform: translateY(-3px);
     border-color: #c5d0da;
     box-shadow: 0 16px 34px rgba(23, 32, 38, 0.12);
+  }
+
+  .movie-card--selected {
+    border-color: #2f7d55;
+    background: #f5fbf7;
+    box-shadow: 0 14px 30px rgba(47, 125, 85, 0.16);
+  }
+
+  .movie-select-control {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(23, 32, 38, 0.18);
+    cursor: pointer;
+  }
+
+  .movie-select-control input {
+    position: absolute;
+    opacity: 0;
+  }
+
+  .movie-select-control span {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    border: 2px solid #9aa6b2;
+    border-radius: 999px;
+    color: transparent;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .movie-select-control input:checked + span {
+    border-color: #2f7d55;
+    background: #2f7d55;
+    color: #ffffff;
+  }
+
+  .movie-select-control input:disabled + span {
+    opacity: 0.75;
   }
 
   .movie-card-poster {
@@ -210,6 +275,17 @@
     font-weight: 700;
   }
 
+  .vote-count-badge {
+    justify-self: start;
+    width: fit-content;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: #eef7f1;
+    color: #2f7d55;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
   .movie-card-body p {
     display: -webkit-box;
     overflow: hidden;
@@ -218,8 +294,68 @@
     line-height: 1.45;
   }
 
-  .movie-card-body button {
-    justify-self: start;
+  .vote-submit-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 16px;
+    padding: 18px;
+    border: 1px solid #dde2e7;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 8px 22px rgba(23, 32, 38, 0.05);
+  }
+
+  .vote-submit-panel span {
+    color: #52616d;
+    font-weight: 700;
+  }
+
+  .already-voted-message {
+    border: 1px solid #9fd3b4;
+    background: #effaf3;
+    color: #236b3b;
+  }
+
+  .vote-limit-message {
+    border: 1px solid #e7c36e;
+    background: #fff8e6;
+  }
+
+  .vote-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(23, 32, 38, 0.42);
+  }
+
+  .vote-modal {
+    display: grid;
+    gap: 14px;
+    width: min(440px, 100%);
+    padding: 22px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 18px 46px rgba(23, 32, 38, 0.22);
+  }
+
+  .vote-modal h2 {
+    margin: 0;
+  }
+
+  .vote-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .secondary-button {
+    background: #ffffff;
+    color: #172026;
   }
 
   .toast {
@@ -265,7 +401,14 @@
 @media (max-width: 820px) {
   .poll-page {
     .poll-heading {
-      grid-template-columns: 1fr;
+      display: grid;
+      gap: 20px;
+    }
+
+    .poll-title-block,
+    .poll-side-panel {
+      position: static;
+      width: 100%;
     }
 
     .poll-meta-card {
@@ -283,6 +426,18 @@
 
     .selected-movie-preview img {
       width: 72px;
+    }
+
+    .feedback,
+    .movie-search-form,
+    .vote-submit-panel {
+      width: 100%;
+    }
+
+    .vote-submit-panel,
+    .vote-modal-actions {
+      align-items: stretch;
+      flex-direction: column;
     }
   }
 }

@@ -33,6 +33,16 @@ export type CreateMoviePayload = {
   posterUrl: string;
 };
 
+export type CreateUserPayload = {
+  name: string;
+};
+
+export type SubmitVotePayload = {
+  pollCode: string;
+  userId: string;
+  movieIds: string[];
+};
+
 export type Movie = {
   id: string;
   pollId: string;
@@ -50,6 +60,11 @@ export type ExternalMovie = {
   poster_path: string;
   poster_url?: string;
   posterUrl?: string;
+};
+
+export type User = {
+  id: string;
+  name: string;
 };
 
 export type Vote = {
@@ -93,6 +108,20 @@ export const apiClient = {
   // createMovie adds one selected movie to the current poll.
   createMovie: (payload: CreateMoviePayload) =>
     request<Movie>('/movies', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  // createUser creates a backend voter record for the saved display name.
+  createUser: (payload: CreateUserPayload) =>
+    request<User>('/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  // submitVote sends all selected movie IDs in one vote request.
+  submitVote: (payload: SubmitVotePayload) =>
+    request<Vote>('/votes', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
