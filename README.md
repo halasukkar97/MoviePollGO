@@ -51,6 +51,7 @@ CREATE TABLE polls (
   poll_code  TEXT NOT NULL,
   name TEXT NOT NULL,
   is_closed BOOLEAN NOT NULL,
+  is_voting_active BOOLEAN NOT NULL DEFAULT FALSE,
   max_votes_per_person INTEGER NOT NULL,
   deadline TIMESTAMP NOT NULL
 );
@@ -133,10 +134,16 @@ GET /polls
 Lists polls from PostgreSQL. Each poll includes its movies and votes.
 
 ```http
-GET /polls/{id}
+GET /polls/{pollCode}
 ```
 
-Loads one poll by ID, including related movies and votes.
+Loads one poll by public poll code, including related movies and votes. The backend can still fall back to the internal ID.
+
+```http
+PATCH /polls/{pollCode}/activate-voting
+```
+
+Moves a poll from setup into voting. After voting starts, movies can no longer be added.
 
 ```http
 GET /results?pollId={id}

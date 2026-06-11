@@ -86,7 +86,9 @@ export function PollPage({ t }: PollPageProps) {
   const [voteLimitMessage, setVoteLimitMessage] = useState('');
   const [pollResults, setPollResults] = useState<PollResults>({});
   const [isVoteConfirmOpen, setIsVoteConfirmOpen] = useState(false);
+  const [isStartVotingConfirmOpen, setIsStartVotingConfirmOpen] = useState(false);
   const [isSubmittingVote, setIsSubmittingVote] = useState(false);
+  const [isActivatingVoting, setIsActivatingVoting] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(
     routeState?.createdPollCode
       ? {
@@ -104,6 +106,8 @@ export function PollPage({ t }: PollPageProps) {
     () => hasVotingEnded(pollState.poll?.deadline ?? '', pollState.poll?.isClosed ?? false),
     [pollState.poll],
   );
+
+  const isVotingActive = pollState.poll?.isVotingActive ?? false;
 
   const currentUserVote = useMemo(
     () => pollState.poll?.votes.find((vote) => vote.userId === currentUserId) ?? null,
@@ -285,7 +289,7 @@ export function PollPage({ t }: PollPageProps) {
   }
 
   function handleToggleMovie(movieID: string) {
-    if (votingEnded || hasAlreadyVoted) {
+    if (!isVotingActive || votingEnded || hasAlreadyVoted) {
       return;
     }
 
@@ -306,7 +310,7 @@ export function PollPage({ t }: PollPageProps) {
   }
 
   function handleOpenVoteConfirm() {
-    if (selectedMovieIds.length === 0 || votingEnded || hasAlreadyVoted) {
+    if (selectedMovieIds.length === 0 || !isVotingActive || votingEnded || hasAlreadyVoted) {
       return;
     }
 
@@ -341,11 +345,47 @@ export function PollPage({ t }: PollPageProps) {
     }
   }
 
+  function handleOpenStartVotingConfirm() {
+    if (!pollState.poll || pollState.poll.isVotingActive || votingEnded) {
+      return;
+    }
+
+    setIsStartVotingConfirmOpen(true);
+  }
+
+  async function handleConfirmStartVoting() {
+    if (!pollState.poll) {
+      return;
+    }
+
+    setIsActivatingVoting(true);
+
+    try {
+      await apiClient.activateVoting(pollState.poll.pollCode);
+      setIsStartVotingConfirmOpen(false);
+      setSelectedMovieIds([]);
+      await refreshPoll();
+      showToast({ type: 'success', message: t('poll.votingStarted') });
+    } catch (error) {
+      showToast({
+        type: 'error',
+        message: error instanceof Error ? error.message : t('poll.startVotingError'),
+      });
+    } finally {
+      setIsActivatingVoting(false);
+    }
+  }
+
   // handleAddMovie sends the selected TMDB movie to the backend create movie endpoint.
   async function handleAddMovie(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!pollState.poll) {
+      return;
+    }
+
+    if (isVotingActive) {
+      showToast({ type: 'error', message: t('poll.addMovieAfterVotingStarted') });
       return;
     }
 
@@ -424,22 +464,37 @@ export function PollPage({ t }: PollPageProps) {
               <strong>{formatDate(pollState.poll.deadline)}</strong>
             </div>
           </div>
-          <div className="vote-submit-panel">
-            <span>{formatSelectedCount(t('poll.selectedCount'), displayedSelectedMovieIds.length, pollState.poll.maxVotesPerPerson)}</span>
-            <button
-              type="button"
-              disabled={selectedMovieIds.length === 0 || votingEnded || hasAlreadyVoted || isSubmittingVote}
-              onClick={handleOpenVoteConfirm}
-            >
-              {t('poll.submitVotes')}
-            </button>
-          </div>
+          {isVotingActive ? (
+            <div className="vote-submit-panel">
+              <span>{formatSelectedCount(t('poll.selectedCount'), displayedSelectedMovieIds.length, pollState.poll.maxVotesPerPerson)}</span>
+              <button
+                type="button"
+                disabled={selectedMovieIds.length === 0 || !isVotingActive || votingEnded || hasAlreadyVoted || isSubmittingVote}
+                onClick={handleOpenVoteConfirm}
+              >
+                {t('poll.submitVotes')}
+              </button>
+            </div>
+          ) : (
+            <div className="start-voting-panel">
+              <p>{t('poll.setupPhase')}</p>
+              <button type="button" disabled={votingEnded || isActivatingVoting} onClick={handleOpenStartVotingConfirm}>
+                {isActivatingVoting ? t('poll.startingVoting') : t('poll.startVoting')}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       {votingEnded ? (
         <div className="feedback expired-message" role="status">
           {t('poll.votingEnded')}
+        </div>
+      ) : null}
+
+      {isVotingActive && !votingEnded ? (
+        <div className="feedback voting-active-message" role="status">
+          {t('poll.votingActive')}
         </div>
       ) : null}
 
@@ -456,6 +511,7 @@ export function PollPage({ t }: PollPageProps) {
       ) : null}
 
       <section className="poll-workspace">
+        {!isVotingActive ? (
         <form className="form movie-search-form" onSubmit={handleAddMovie}>
           <h2>{t('poll.addMovies')}</h2>
           <label>
@@ -466,7 +522,7 @@ export function PollPage({ t }: PollPageProps) {
               placeholder={t('poll.movieTitlePlaceholder')}
               value={movieDraft.title}
               onChange={handleMovieDraftChange}
-              disabled={votingEnded}
+              disabled={votingEnded || isVotingActive}
               autoComplete="off"
             />
           </label>
@@ -503,10 +559,11 @@ export function PollPage({ t }: PollPageProps) {
             </div>
           ) : null}
 
-          <button type="submit" disabled={votingEnded || isAddingMovie}>
+          <button type="submit" disabled={votingEnded || isVotingActive || isAddingMovie}>
             {isAddingMovie ? t('poll.addingMovie') : t('poll.addMovieButton')}
           </button>
         </form>
+        ) : null}
 
         <section className="movie-grid-section">
           <h2>{t('poll.moviesInPoll')}</h2>
@@ -518,10 +575,11 @@ export function PollPage({ t }: PollPageProps) {
                 const description = movie.description;
                 const voteCount = pollResults[movie.id] ?? countVotesForMovie(movie.id, pollState.poll?.votes ?? []);
                 const isSelected = displayedSelectedMovieIds.includes(movie.id);
-                const isSelectionDisabled = votingEnded || hasAlreadyVoted;
+                const isSelectionDisabled = !isVotingActive || votingEnded || hasAlreadyVoted;
 
                 return (
-                  <article className={isSelected ? 'movie-card movie-card--selected' : 'movie-card'} key={movie.id}>
+                  <article className={isVotingActive && isSelected ? 'movie-card movie-card--selected' : 'movie-card'} key={movie.id}>
+                    {isVotingActive ? (
                     <label className="movie-select-control">
                       <input
                         type="checkbox"
@@ -531,6 +589,7 @@ export function PollPage({ t }: PollPageProps) {
                       />
                       <span aria-hidden="true">✓</span>
                     </label>
+                    ) : null}
                     <div className="movie-card-poster">
                       {poster ? <img src={poster} alt={t('poll.posterAlt')} /> : <span>{t('poll.noPoster')}</span>}
                     </div>
@@ -551,6 +610,23 @@ export function PollPage({ t }: PollPageProps) {
           </div>
         </section>
       </section>
+
+      {isStartVotingConfirmOpen ? (
+        <div className="vote-modal-backdrop" role="presentation">
+          <div className="vote-modal" role="dialog" aria-modal="true" aria-labelledby="start-voting-confirm-title">
+            <h2 id="start-voting-confirm-title">{t('poll.confirmStartVotingTitle')}</h2>
+            <p>{t('poll.confirmStartVotingMessage')}</p>
+            <div className="vote-modal-actions">
+              <button type="button" className="secondary-button" onClick={() => setIsStartVotingConfirmOpen(false)}>
+                {t('poll.cancel')}
+              </button>
+              <button type="button" disabled={isActivatingVoting} onClick={handleConfirmStartVoting}>
+                {t('poll.confirmStartVotingButton')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isVoteConfirmOpen ? (
         <div className="vote-modal-backdrop" role="presentation">

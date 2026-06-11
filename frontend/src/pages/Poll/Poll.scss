@@ -294,6 +294,34 @@
     line-height: 1.45;
   }
 
+  .start-voting-panel {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    padding: 18px;
+    border: 1px solid #dde2e7;
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: 0 8px 22px rgba(23, 32, 38, 0.05);
+  }
+
+  .start-voting-panel p {
+    margin: 0;
+    color: #52616d;
+    font-weight: 700;
+  }
+
+  .start-voting-panel button {
+    justify-self: start;
+    background: #2f7d55;
+  }
+
+  .voting-active-message {
+    border: 1px solid #9fd3b4;
+    background: #effaf3;
+    color: #236b3b;
+  }
+
   .vote-submit-panel {
     display: flex;
     align-items: center;
@@ -430,6 +458,7 @@
 
     .feedback,
     .movie-search-form,
+    .start-voting-panel,
     .vote-submit-panel {
       width: 100%;
     }

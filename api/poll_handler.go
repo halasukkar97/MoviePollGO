@@ -27,6 +27,7 @@ type CreatePollResponse struct {
 	Name              string    `json:"name"`
 	MaxVotesPerPerson int       `json:"maxVotesPerPerson"`
 	IsClosed          bool      `json:"isClosed"`
+	IsVotingActive    bool      `json:"isVotingActive"`
 	Deadline          time.Time `json:"deadline"`
 }
 
@@ -71,6 +72,7 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 		Name:              createdPoll.Name,
 		MaxVotesPerPerson: createdPoll.MaxVotesPerPerson,
 		IsClosed:          createdPoll.IsClosed,
+		IsVotingActive:    createdPoll.IsVotingActive,
 		Deadline:          createdPoll.Deadline,
 	}
 
@@ -154,7 +156,7 @@ func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
 func GetAllPolls() ([]poll.Poll, error) {
 	// Query returns rows, which must be scanned one at a time.
 	rows, err := database.DB.Query(
-		"SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, max_votes_per_person, deadline FROM polls",
+		"SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, is_voting_active, max_votes_per_person, deadline FROM polls",
 	)
 
 	if err != nil {
@@ -175,6 +177,7 @@ func GetAllPolls() ([]poll.Poll, error) {
 			&currentPoll.PollCode,
 			&currentPoll.Name,
 			&currentPoll.IsClosed,
+			&currentPoll.IsVotingActive,
 			&currentPoll.MaxVotesPerPerson,
 			&currentPoll.Deadline,
 		)
@@ -214,6 +217,11 @@ func GetAllPolls() ([]poll.Poll, error) {
 func PollByIDHandler(w http.ResponseWriter, r *http.Request) {
 	pollIdentifier := strings.TrimPrefix(r.URL.Path, "/polls/")
 
+	if strings.HasSuffix(pollIdentifier, "/activate-voting") {
+		ActivateVotingHandler(w, r, strings.TrimSuffix(pollIdentifier, "/activate-voting"))
+		return
+	}
+
 	foundPoll, found, codeErr := findPollByCode(pollIdentifier)
 	if !found {
 		var idErr error
@@ -230,6 +238,44 @@ func PollByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Encode writes the full poll, including loaded movies and votes, as JSON.
 	err := json.NewEncoder(w).Encode(foundPoll)
+	if err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
+	}
+}
+
+// ActivateVotingHandler handles PATCH /polls/{pollCode}/activate-voting.
+func ActivateVotingHandler(w http.ResponseWriter, r *http.Request, pollCode string) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	foundPoll, found := FindPollByCode(pollCode)
+	if !found {
+		http.Error(w, "poll not found", http.StatusNotFound)
+		return
+	}
+
+	if foundPoll.IsVotingActive {
+		http.Error(w, "voting is already active", http.StatusConflict)
+		return
+	}
+
+	// Activating voting locks the setup phase so no more movies can be added.
+	err := ActivateVoting(pollCode)
+	if err != nil {
+		http.Error(w, "failed to activate voting", http.StatusInternalServerError)
+		return
+	}
+
+	updatedPoll, found := FindPollByCode(pollCode)
+	if !found {
+		http.Error(w, "poll not found", http.StatusNotFound)
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(updatedPoll)
 	if err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 		return

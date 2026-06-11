@@ -34,7 +34,7 @@ func FindPollByCode(pollCode string) (*poll.Poll, bool) {
 
 func findPollByID(pollID string) (*poll.Poll, bool, error) {
 	return findPollByQuery(
-		`SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, max_votes_per_person, deadline
+		`SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, is_voting_active, max_votes_per_person, deadline
 		FROM polls
 		WHERE id = $1`,
 		pollID,
@@ -43,7 +43,7 @@ func findPollByID(pollID string) (*poll.Poll, bool, error) {
 
 func findPollByCode(pollCode string) (*poll.Poll, bool, error) {
 	return findPollByQuery(
-		`SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, max_votes_per_person, deadline
+		`SELECT id, COALESCE(poll_code, '') AS poll_code, name, is_closed, is_voting_active, max_votes_per_person, deadline
 		FROM polls
 		WHERE poll_code = $1`,
 		pollCode,
@@ -61,6 +61,7 @@ func findPollByQuery(query string, value string) (*poll.Poll, bool, error) {
 		&foundPoll.PollCode,
 		&foundPoll.Name,
 		&foundPoll.IsClosed,
+		&foundPoll.IsVotingActive,
 		&foundPoll.MaxVotesPerPerson,
 		&foundPoll.Deadline,
 	)
@@ -95,14 +96,25 @@ func findPollByQuery(query string, value string) (*poll.Poll, bool, error) {
 func SavePoll(poll poll.Poll) error {
 	_, err := database.DB.Exec(
 		`INSERT INTO polls
-		(id, poll_code, name, is_closed, max_votes_per_person, deadline)
-		VALUES ($1, $2, $3, $4, $5, $6)`,
+		(id, poll_code, name, is_closed, is_voting_active, max_votes_per_person, deadline)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		poll.ID,
 		poll.PollCode,
 		poll.Name,
 		poll.IsClosed,
+		poll.IsVotingActive,
 		poll.MaxVotesPerPerson,
 		poll.Deadline,
+	)
+
+	return err
+}
+
+// ActivateVoting starts the voting phase for a poll identified by its public code.
+func ActivateVoting(pollCode string) error {
+	_, err := database.DB.Exec(
+		"UPDATE polls SET is_voting_active = TRUE WHERE poll_code = $1",
+		pollCode,
 	)
 
 	return err

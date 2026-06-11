@@ -51,14 +51,25 @@ func CreateMovieHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// A movie must point to an existing poll, so check that before saving.
-	pollExists, pollError := PollExists(req.PollID)
+	foundPoll, pollFound, pollError := findPollByID(req.PollID)
 	if pollError != nil {
 		http.Error(w, "failed to check poll", http.StatusInternalServerError)
 		return
 	}
 
-	if !pollExists {
+	if !pollFound {
 		http.Error(w, "poll not found", http.StatusNotFound)
+		return
+	}
+
+	// Once voting starts, the setup phase is locked and movies cannot change.
+	if foundPoll.IsVotingActive {
+		http.Error(w, "voting has already started, movies can no longer be added", http.StatusBadRequest)
+		return
+	}
+
+	if foundPoll.IsClosed || foundPoll.IsExpired() {
+		http.Error(w, "poll is closed or expired, movies can no longer be added", http.StatusBadRequest)
 		return
 	}
 

@@ -78,6 +78,10 @@ func TestCreateNewPollSetsDefaults(t *testing.T) {
 		t.Error("expected new poll to start open")
 	}
 
+	if p.IsVotingActive {
+		t.Error("expected new poll to start with voting inactive")
+	}
+
 	if len(p.Movies) != 0 || len(p.Votes) != 0 {
 		t.Fatalf("expected new poll to start with empty movies and votes")
 	}
@@ -177,6 +181,7 @@ func TestGetResultsCountsRepeatedMovieIDsAcrossVotes(t *testing.T) {
 
 func TestSubmitVoteSuccess(t *testing.T) {
 	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	p.IsVotingActive = true
 	movie1 := newTestMovie(p.ID, "Interstellar")
 	movie2 := newTestMovie(p.ID, "Dune")
 
@@ -202,6 +207,7 @@ func TestSubmitVoteSuccess(t *testing.T) {
 
 func TestSubmitVotePollExpired(t *testing.T) {
 	p := newTestPoll(3, time.Now().Add(-24*time.Hour))
+	p.IsVotingActive = true
 	movie1 := newTestMovie(p.ID, "Interstellar")
 	movie2 := newTestMovie(p.ID, "Dune")
 
@@ -217,6 +223,7 @@ func TestSubmitVotePollExpired(t *testing.T) {
 
 func TestSubmitVotePollClosed(t *testing.T) {
 	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	p.IsVotingActive = true
 	movie1 := newTestMovie(p.ID, "Interstellar")
 	movie2 := newTestMovie(p.ID, "Dune")
 
@@ -233,6 +240,7 @@ func TestSubmitVotePollClosed(t *testing.T) {
 
 func TestSubmitVoteAlreadyVoted(t *testing.T) {
 	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	p.IsVotingActive = true
 	movie1 := newTestMovie(p.ID, "Interstellar")
 	movie2 := newTestMovie(p.ID, "Dune")
 	movie3 := newTestMovie(p.ID, "Titanic")
@@ -253,8 +261,22 @@ func TestSubmitVoteAlreadyVoted(t *testing.T) {
 	requireError(t, err, "you have already voted for this poll")
 }
 
+func TestSubmitVoteBeforeVotingStarts(t *testing.T) {
+	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	movie1 := newTestMovie(p.ID, "Interstellar")
+
+	p.AddMovie(movie1)
+
+	v := newTestVote(p.ID, "hela-user", []string{movie1.ID})
+
+	err := p.SubmitVote(v)
+
+	requireError(t, err, "voting has not started yet")
+}
+
 func TestSubmitVoteMovieDoesNotExist(t *testing.T) {
 	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	p.IsVotingActive = true
 	movie1 := newTestMovie(p.ID, "Interstellar")
 	movie2 := newTestMovie(p.ID, "Dune")
 
@@ -269,6 +291,7 @@ func TestSubmitVoteMovieDoesNotExist(t *testing.T) {
 
 func TestSubmitVoteDuplicateMovie(t *testing.T) {
 	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	p.IsVotingActive = true
 	movie1 := newTestMovie(p.ID, "Interstellar")
 
 	p.AddMovie(movie1)
@@ -282,6 +305,7 @@ func TestSubmitVoteDuplicateMovie(t *testing.T) {
 
 func TestSubmitVoteTooManyMovies(t *testing.T) {
 	p := newTestPoll(3, time.Now().Add(24*time.Hour))
+	p.IsVotingActive = true
 	movie1 := newTestMovie(p.ID, "Interstellar")
 	movie2 := newTestMovie(p.ID, "Dune")
 	movie3 := newTestMovie(p.ID, "Titanic")

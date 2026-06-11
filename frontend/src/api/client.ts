@@ -80,6 +80,7 @@ export type Poll = {
   name: string;
   maxVotesPerPerson: number;
   isClosed: boolean;
+  isVotingActive: boolean;
   deadline: string;
   movies: Movie[];
   votes: Vote[];
@@ -100,6 +101,12 @@ export const apiClient = {
 
   // getPoll opens one poll by its public poll code.
   getPoll: (pollCode: string) => request<Poll>('/polls/' + encodeURIComponent(pollCode)),
+
+  // activateVoting moves a poll from setup into the voting phase.
+  activateVoting: (pollCode: string) =>
+    request<Poll>('/polls/' + encodeURIComponent(pollCode) + '/activate-voting', {
+      method: 'PATCH',
+    }),
 
   // searchMovies asks the backend to search TMDB for movie suggestions.
   searchMovies: (query: string) =>

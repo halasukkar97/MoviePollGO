@@ -6,6 +6,19 @@
   <component name="ChangeListManager">
     <list default="true" id="80df4cc1-9e86-449e-a202-c932d5c93301" name="Changes" comment="fix(deploy): support Vercel routing and deployed frontend CORS">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/handler_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/handler_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/helper.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/helper.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/helper_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/helper_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/movie_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/movie_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/api/poll_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/api/poll_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/api/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/data/translations.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/data/translations.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Poll/Poll.scss" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Poll/Poll.scss" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/Poll/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/Poll/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/poll/poll.go" beforeDir="false" afterPath="$PROJECT_DIR$/poll/poll.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/poll/poll_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/poll/poll_test.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,61 +38,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.392975691443211" />
-      <entry key="MS500" value="2.770658843997035" />
-      <entry key="S2" value="4.125273351808694" />
-      <entry key="S5" value="4.610383263884941" />
-      <entry key="S10" value="4.797798848103113" />
-      <entry key="S30" value="4.935541452046728" />
-      <entry key="S60" value="5.083452960217639" />
-      <entry key="M2" value="5.578061850634459" />
-      <entry key="M5" value="6.575059096411265" />
-      <entry key="M10" value="7.467926717990822" />
-      <entry key="M15" value="8.362790684392198" />
-      <entry key="M30" value="11.126347287197385" />
-      <entry key="H1" value="15.32782843330365" />
-      <entry key="H2" value="19.594904158994627" />
-      <entry key="H4" value="22.77224592160121" />
-      <entry key="D1" value="26.207069023575187" />
-      <entry key="W1" value="26.88432557049553" />
+      <entry key="MS100" value="1.5974631551166256" />
+      <entry key="MS500" value="3.9908285692072667" />
+      <entry key="S2" value="7.368959045640424" />
+      <entry key="S5" value="8.783658722573962" />
+      <entry key="S10" value="9.359809755726383" />
+      <entry key="S30" value="9.783540497645419" />
+      <entry key="S60" value="10.005428007374851" />
+      <entry key="M2" value="10.536203512736543" />
+      <entry key="M5" value="11.556071849705999" />
+      <entry key="M10" value="12.45743438363494" />
+      <entry key="M15" value="13.355130444612493" />
+      <entry key="M30" value="16.121490803645912" />
+      <entry key="H1" value="20.324620214371812" />
+      <entry key="H2" value="24.59290399132983" />
+      <entry key="H4" value="27.771098382494557" />
+      <entry key="D1" value="31.206851199572498" />
+      <entry key="W1" value="31.884293704435144" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
-      <entry key="S10" value="6.681494641885261E-241" />
-      <entry key="S30" value="8.74227656620074E-81" />
-      <entry key="S60" value="9.35001420651366E-41" />
-      <entry key="M2" value="9.669547148917399E-21" />
-      <entry key="M5" value="9.866484867863406E-9" />
-      <entry key="M10" value="9.933018105220285E-5" />
-      <entry key="M15" value="0.0021448033767178195" />
-      <entry key="M30" value="0.046312021945903246" />
-      <entry key="H1" value="0.21520228146072978" />
-      <entry key="H2" value="0.4638989992021213" />
-      <entry key="H4" value="0.6811013134638051" />
-      <entry key="D1" value="0.9379980876643967" />
-      <entry key="W1" value="0.9908977685956066" />
+      <entry key="S10" value="6.249630381876447E-241" />
+      <entry key="S30" value="8.549711186567445E-81" />
+      <entry key="S60" value="9.24646483071635E-41" />
+      <entry key="M2" value="9.61585400820767E-21" />
+      <entry key="M5" value="9.844533573718574E-9" />
+      <entry key="M10" value="9.921962292671024E-5" />
+      <entry key="M15" value="0.0021432115849222997" />
+      <entry key="M30" value="0.04629483324219134" />
+      <entry key="H1" value="0.2151623415985968" />
+      <entry key="H2" value="0.46385594918961287" />
+      <entry key="H4" value="0.6810697094935378" />
+      <entry key="D1" value="0.9379908334727304" />
+      <entry key="W1" value="0.990896673834593" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.3431497624760231" />
-      <entry key="MS500" value="2.7401998577834443" />
-      <entry key="S2" value="4.1140879391717" />
-      <entry key="S5" value="4.6054615838347255" />
-      <entry key="S10" value="4.79525410219716" />
-      <entry key="S30" value="4.93464839833192" />
-      <entry key="S60" value="5.082683143911276" />
-      <entry key="M2" value="5.576985343416623" />
-      <entry key="M5" value="6.574054509977935" />
-      <entry key="M10" value="7.467343194621702" />
-      <entry key="M15" value="8.364425710669476" />
-      <entry key="M30" value="11.17235334484613" />
-      <entry key="H1" value="15.54283397278503" />
-      <entry key="H2" value="20.058677660222244" />
-      <entry key="H4" value="23.453273230044292" />
-      <entry key="D1" value="27.145052610423782" />
-      <entry key="W1" value="27.87522120447033" />
+      <entry key="MS100" value="1.5094024953991807" />
+      <entry key="MS500" value="3.9083477310253567" />
+      <entry key="S2" value="7.329162904578757" />
+      <entry key="S5" value="8.764968055093346" />
+      <entry key="S10" value="9.349926118728805" />
+      <entry key="S30" value="9.780093532973046" />
+      <entry key="S60" value="10.003370651700795" />
+      <entry key="M2" value="10.534482615686803" />
+      <entry key="M5" value="11.554808788787932" />
+      <entry key="M10" value="12.456721061053033" />
+      <entry key="M15" value="13.356677270750659" />
+      <entry key="M30" value="16.167436282360253" />
+      <entry key="H1" value="20.5395640959978" />
+      <entry key="H2" value="25.056623576284508" />
+      <entry key="H4" value="28.45208865128465" />
+      <entry key="D1" value="32.14482662579945" />
+      <entry key="W1" value="32.87518811414471" />
     </decayedShown>
   </component>
   <component name="OptimizeOnSaveOptions">

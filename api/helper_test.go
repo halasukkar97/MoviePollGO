@@ -52,12 +52,13 @@ func TestSavePollWritesPollToDatabase(t *testing.T) {
 		PollCode:          "12345678",
 		Name:              "Movie Night",
 		IsClosed:          false,
+		IsVotingActive:    false,
 		MaxVotesPerPerson: 2,
 		Deadline:          deadline,
 	}
 
 	mock.ExpectExec("INSERT INTO polls").
-		WithArgs(p.ID, p.PollCode, p.Name, p.IsClosed, p.MaxVotesPerPerson, p.Deadline).
+		WithArgs(p.ID, p.PollCode, p.Name, p.IsClosed, p.IsVotingActive, p.MaxVotesPerPerson, p.Deadline).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := SavePoll(p); err != nil {
@@ -71,16 +72,17 @@ func TestFindPollByCodeUsesPollCodeColumn(t *testing.T) {
 	_, mock := newMockDatabase(t)
 	deadline := time.Now().Add(24 * time.Hour)
 
-	mock.ExpectQuery(`SELECT id, COALESCE\(poll_code, ''\) AS poll_code, name, is_closed, max_votes_per_person, deadline\s+FROM polls\s+WHERE poll_code = \$1`).
+	mock.ExpectQuery(`SELECT id, COALESCE\(poll_code, ''\) AS poll_code, name, is_closed, is_voting_active, max_votes_per_person, deadline\s+FROM polls\s+WHERE poll_code = \$1`).
 		WithArgs("03739172").
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id",
 			"poll_code",
 			"name",
 			"is_closed",
+			"is_voting_active",
 			"max_votes_per_person",
 			"deadline",
-		}).AddRow("poll-1", "03739172", "Movie Night", false, 2, deadline))
+		}).AddRow("poll-1", "03739172", "Movie Night", false, false, 2, deadline))
 
 	expectEmptyRelations(mock, "poll-1")
 
@@ -91,6 +93,20 @@ func TestFindPollByCodeUsesPollCodeColumn(t *testing.T) {
 
 	if foundPoll.ID != "poll-1" || foundPoll.PollCode != "03739172" {
 		t.Fatalf("unexpected poll returned: %+v", foundPoll)
+	}
+
+	requireExpectations(t, mock)
+}
+
+func TestActivateVotingUpdatesPollPhase(t *testing.T) {
+	_, mock := newMockDatabase(t)
+
+	mock.ExpectExec("UPDATE polls SET is_voting_active = TRUE WHERE poll_code").
+		WithArgs("03739172").
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	if err := ActivateVoting("03739172"); err != nil {
+		t.Fatalf("expected ActivateVoting to succeed, got %v", err)
 	}
 
 	requireExpectations(t, mock)

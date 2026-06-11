@@ -17,6 +17,7 @@ type Poll struct {
 	PollCode          string        `json:"pollCode"`
 	Name              string        `json:"name"`
 	IsClosed          bool          `json:"isClosed"`
+	IsVotingActive    bool          `json:"isVotingActive"`
 	MaxVotesPerPerson int           `json:"maxVotesPerPerson"`
 	Deadline          time.Time     `json:"deadline"`
 	Movies            []movie.Movie `json:"movies"`
@@ -38,6 +39,7 @@ func CreateNewPoll(input CreatePollInput) Poll {
 		ID:                uuid.New().String(),
 		PollCode:          input.PollCode,
 		Name:              input.Name,
+		IsVotingActive:    false,
 		MaxVotesPerPerson: input.MaxVotesPerPerson,
 		Deadline:          input.Deadline,
 		Movies:            []movie.Movie{},
@@ -137,6 +139,11 @@ func (p *Poll) SubmitVote(v vote.Vote) error {
 	// Do not accept votes after the deadline.
 	if p.IsExpired() {
 		return errors.New("poll has expired")
+	}
+
+	// Voting only opens after the creator activates the poll.
+	if !p.IsVotingActive {
+		return errors.New("voting has not started yet")
 	}
 
 	// Do not allow the same user to vote twice in the same poll.

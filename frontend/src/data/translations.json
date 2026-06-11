@@ -86,7 +86,17 @@
     "poll.alreadyVoted": "You already voted in this poll.",
     "poll.votesLabel": "{count} votes",
     "poll.selectedCount": "{selected} of {max} selected",
-    "poll.missingVoterName": "Enter your name before voting."
+    "poll.missingVoterName": "Enter your name before voting.",
+    "poll.setupPhase": "Setup phase: add movies before voting starts.",
+    "poll.startVoting": "Start voting",
+    "poll.startingVoting": "Starting voting...",
+    "poll.confirmStartVotingTitle": "Start voting?",
+    "poll.confirmStartVotingMessage": "Once voting is activated, you won’t be able to add more movies. Are you sure?",
+    "poll.confirmStartVotingButton": "Yes, start voting",
+    "poll.votingStarted": "Voting has started.",
+    "poll.startVotingError": "Could not start voting.",
+    "poll.votingActive": "Voting is active.",
+    "poll.addMovieAfterVotingStarted": "Voting has already started, movies can no longer be added."
   },
   "de": {
     "app.brand": "Votify",
@@ -175,6 +185,16 @@
     "poll.alreadyVoted": "Du hast in dieser Umfrage bereits abgestimmt.",
     "poll.votesLabel": "{count} Stimmen",
     "poll.selectedCount": "{selected} von {max} ausgewählt",
-    "poll.missingVoterName": "Gib deinen Namen ein, bevor du abstimmst."
+    "poll.missingVoterName": "Gib deinen Namen ein, bevor du abstimmst.",
+    "poll.setupPhase": "Einrichtungsphase: Füge Filme hinzu, bevor die Abstimmung startet.",
+    "poll.startVoting": "Abstimmung starten",
+    "poll.startingVoting": "Abstimmung wird gestartet...",
+    "poll.confirmStartVotingTitle": "Abstimmung starten?",
+    "poll.confirmStartVotingMessage": "Sobald die Abstimmung aktiviert ist, kannst du keine Filme mehr hinzufügen. Bist du sicher?",
+    "poll.confirmStartVotingButton": "Ja, Abstimmung starten",
+    "poll.votingStarted": "Die Abstimmung wurde gestartet.",
+    "poll.startVotingError": "Abstimmung konnte nicht gestartet werden.",
+    "poll.votingActive": "Die Abstimmung ist aktiv.",
+    "poll.addMovieAfterVotingStarted": "Die Abstimmung hat bereits begonnen, Filme können nicht mehr hinzugefügt werden."
   }
 }
