@@ -6,17 +6,17 @@ import (
 
 // Vote represents one user's selected movies for one poll.
 type Vote struct {
-	ID       string
-	PollID   string
-	UserID   string
-	MovieIDs []string
+	ID       string   `json:"id"`
+	PollID   string   `json:"pollId"`
+	UserID   string   `json:"userId"`
+	MovieIDs []string `json:"movieIds"`
 }
 
 // CreateVoteInput contains the data needed to create a vote.
 type CreateVoteInput struct {
-	PollID   string
-	UserID   string
-	MovieIDs []string
+	PollID   string   `json:"pollId"`
+	UserID   string   `json:"userId"`
+	MovieIDs []string `json:"movieIds"`
 }
 
 // CreateNewVote creates a Vote with a new unique ID.

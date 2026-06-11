@@ -13,22 +13,22 @@ import (
 // ID is the internal UUID used by the database.
 // PollCode is the short public code users can share with friends.
 type Poll struct {
-	ID                string
-	PollCode          string
-	Name              string
-	IsClosed          bool
-	MaxVotesPerPerson int
-	Deadline          time.Time
-	Movies            []movie.Movie
-	Votes             []vote.Vote
+	ID                string        `json:"id"`
+	PollCode          string        `json:"pollCode"`
+	Name              string        `json:"name"`
+	IsClosed          bool          `json:"isClosed"`
+	MaxVotesPerPerson int           `json:"maxVotesPerPerson"`
+	Deadline          time.Time     `json:"deadline"`
+	Movies            []movie.Movie `json:"movies"`
+	Votes             []vote.Vote   `json:"votes"`
 }
 
 // CreatePollInput contains the fields needed to create a new poll.
 type CreatePollInput struct {
-	PollCode          string
-	Name              string
-	MaxVotesPerPerson int
-	Deadline          time.Time
+	PollCode          string    `json:"pollCode"`
+	Name              string    `json:"name"`
+	MaxVotesPerPerson int       `json:"maxVotesPerPerson"`
+	Deadline          time.Time `json:"deadline"`
 }
 
 // CreateNewPoll creates a new poll.

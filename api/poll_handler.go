@@ -163,7 +163,7 @@ func GetAllPolls() ([]poll.Poll, error) {
 
 	defer rows.Close()
 
-	var polls []poll.Poll
+	polls := make([]poll.Poll, 0)
 
 	// rows.Next moves through the result set one database row at a time.
 	for rows.Next() {

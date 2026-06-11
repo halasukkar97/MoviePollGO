@@ -104,7 +104,7 @@ func GetAllUsers() ([]user.User, error) {
 
 	defer rows.Close()
 
-	var users []user.User
+	users := make([]user.User, 0)
 
 	// rows.Next moves through the result set one database row at a time.
 	for rows.Next() {

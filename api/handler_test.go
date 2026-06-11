@@ -153,9 +153,9 @@ func TestListPollsHandlerReturnsPollsWithMoviesAndVotes(t *testing.T) {
 	}
 
 	var polls []struct {
-		ID       string        `json:"ID"`
-		PollCode string        `json:"PollCode"`
-		Movies   []movie.Movie `json:"Movies"`
+		ID       string        `json:"id"`
+		PollCode string        `json:"pollCode"`
+		Movies   []movie.Movie `json:"movies"`
 	}
 	if err := json.NewDecoder(response.Body).Decode(&polls); err != nil {
 		t.Fatalf("failed to decode polls response: %v", err)

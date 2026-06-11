@@ -107,7 +107,7 @@ func GetVotesByPollID(pollID string) ([]vote.Vote, error) {
 
 	defer rows.Close()
 
-	var votes []vote.Vote
+	votes := make([]vote.Vote, 0)
 
 	// Build one vote struct for each returned database row.
 	for rows.Next() {

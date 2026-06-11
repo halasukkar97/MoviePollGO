@@ -169,7 +169,7 @@ func GetMoviesByPollID(pollID string) ([]movie.Movie, error) {
 func scanMovieRows(rows *sql.Rows, hasPosterURL bool) ([]movie.Movie, error) {
 	defer rows.Close()
 
-	var movies []movie.Movie
+	movies := make([]movie.Movie, 0)
 
 	// Build one movie struct for each returned database row.
 	for rows.Next() {
