@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="80df4cc1-9e86-449e-a202-c932d5c93301" name="Changes" comment="fix(api): return camelCase poll data and support pollCode lookups" />
+    <list default="true" id="80df4cc1-9e86-449e-a202-c932d5c93301" name="Changes" comment="git commit -m &quot;feat: initial frontend implementation&quot;" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -172,6 +172,7 @@
     <MESSAGE value="feat: support public poll codes for voting and results" />
     <MESSAGE value="feat: add public poll code support across backend APIs" />
     <MESSAGE value="fix(api): return camelCase poll data and support pollCode lookups" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(api): return camelCase poll data and support pollCode lookups" />
+    <MESSAGE value="git commit -m &quot;feat: initial frontend implementation&quot;" />
+    <option name="LAST_COMMIT_MESSAGE" value="git commit -m &quot;feat: initial frontend implementation&quot;" />
   </component>
 </project>

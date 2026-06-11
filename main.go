@@ -52,11 +52,21 @@ func MovieVoteHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Movie Vote API updated")
 }
 
-// enableCORS allows the frontend development server to call this backend.
-// Without this, the browser blocks requests from localhost:5173 to localhost:8080.
+// enableCORS allows the known frontend apps to call this backend.
+// Without this, browsers block requests from the React app to the Go API.
 func enableCORS(next http.Handler) http.Handler {
+	allowedOrigins := map[string]bool{
+		"http://localhost:5173":         true,
+		"https://votify-six.vercel.app": true,
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		origin := r.Header.Get("Origin")
+		if allowedOrigins[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+		}
+
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
