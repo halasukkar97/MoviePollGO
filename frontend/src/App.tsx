@@ -1,0 +1,128 @@
+import { useState } from 'react';
+import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { useTranslations } from './i18n/useTranslations';
+import type { Language } from './i18n/useTranslations';
+import { CreatePollPage } from './pages/CreatePoll';
+import { HistoryPage } from './pages/History';
+import { HomePage } from './pages/Home';
+import { JoinPollPage } from './pages/JoinPoll';
+import { PollPage } from './pages/Poll';
+import { PollResultsPage } from './pages/PollResults';
+
+const USER_NAME_STORAGE_KEY = 'votify:userName';
+
+export default function App() {
+  const navigate = useNavigate();
+  const { language, languages, setLanguage, t } = useTranslations();
+  const [savedName, setSavedName] = useState(() =>
+    localStorage.getItem(USER_NAME_STORAGE_KEY) ?? '',
+  );
+  const [draftName, setDraftName] = useState(savedName);
+  const [isEditingName, setIsEditingName] = useState(savedName.length === 0);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const isNameEntryVisible = savedName.length === 0 || isEditingName;
+
+  const navItems = [
+    { to: '/', label: t('nav.home') },
+    { to: '/polls/new', label: t('nav.createPoll') },
+    { to: '/join', label: t('nav.joinPoll') },
+    { to: '/history', label: t('nav.history') },
+  ];
+
+  // saveName writes the current name to localStorage for future visits.
+  function saveName(nextName: string) {
+    localStorage.setItem(USER_NAME_STORAGE_KEY, nextName);
+    setSavedName(nextName);
+    setDraftName(nextName);
+    setIsEditingName(false);
+  }
+
+  // startEditingName sends the user back home so the focused name form is visible.
+  function startEditingName() {
+    setDraftName(savedName);
+    setIsEditingName(true);
+    navigate('/');
+  }
+
+  // chooseLanguage updates the app text and closes the small language menu.
+  function chooseLanguage(nextLanguage: Language) {
+    setLanguage(nextLanguage);
+    setIsLanguageMenuOpen(false);
+  }
+
+  return (
+    <div className={isNameEntryVisible ? 'app-shell app-shell--name-entry' : 'app-shell'}>
+      <header className="site-header">
+        <a className="brand" href="/">
+          {t('app.brand')}
+        </a>
+
+        <div className="header-menu">
+          {!isNameEntryVisible ? (
+            <nav aria-label="Main navigation">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) => (isActive ? 'active' : undefined)}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+              <button className="header-name-button" type="button" onClick={startEditingName}>
+                {savedName}
+              </button>
+            </nav>
+          ) : null}
+
+          <div className="language-switcher">
+            <button
+              type="button"
+              className="language-button"
+              aria-label={t('language.label')}
+              onClick={() => setIsLanguageMenuOpen((isOpen) => !isOpen)}
+            >
+              {language.toUpperCase()}
+            </button>
+
+            {isLanguageMenuOpen ? (
+              <div className="language-menu">
+                {languages.map((availableLanguage) => (
+                  <button
+                    key={availableLanguage}
+                    type="button"
+                    onClick={() => chooseLanguage(availableLanguage)}
+                  >
+                    {availableLanguage.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <HomePage
+                draftName={draftName}
+                isEditingName={isNameEntryVisible}
+                onDraftNameChange={setDraftName}
+                onSaveName={saveName}
+                t={t}
+              />
+            }
+          />
+          <Route path="/polls/new" element={<CreatePollPage t={t} />} />
+          <Route path="/join" element={<JoinPollPage savedName={savedName} t={t} />} />
+          <Route path="/history" element={<HistoryPage t={t} />} />
+          <Route path="/polls/:pollCode" element={<PollPage t={t} />} />
+          <Route path="/results" element={<PollResultsPage t={t} />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}

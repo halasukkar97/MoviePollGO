@@ -1,0 +1,17 @@
+.create-poll-page {
+  .form {
+    align-items: start;
+  }
+
+  .feedback {
+    max-width: 480px;
+    padding: 12px 14px;
+    border-radius: 6px;
+  }
+
+  .error-message {
+    border: 1px solid #e0a0a0;
+    background: #fff2f2;
+    color: #842626;
+  }
+}

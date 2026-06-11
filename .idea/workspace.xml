@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="80df4cc1-9e86-449e-a202-c932d5c93301" name="Changes" comment="fix(api): return camelCase poll data and support pollCode lookups" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
+  </component>
+  <component name="GOROOT" url="file:///opt/homebrew/opt/go/libexec" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.392975691443211" />
+      <entry key="MS500" value="2.770658843997035" />
+      <entry key="S2" value="4.125273351808694" />
+      <entry key="S5" value="4.610383263884941" />
+      <entry key="S10" value="4.797798848103113" />
+      <entry key="S30" value="4.935541452046728" />
+      <entry key="S60" value="5.083452960217639" />
+      <entry key="M2" value="5.578061850634459" />
+      <entry key="M5" value="6.575059096411265" />
+      <entry key="M10" value="7.467926717990822" />
+      <entry key="M15" value="8.362790684392198" />
+      <entry key="M30" value="11.126347287197385" />
+      <entry key="H1" value="15.32782843330365" />
+      <entry key="H2" value="19.594904158994627" />
+      <entry key="H4" value="22.77224592160121" />
+      <entry key="D1" value="26.207069023575187" />
+      <entry key="W1" value="26.88432557049553" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="6.681494641885261E-241" />
+      <entry key="S30" value="8.74227656620074E-81" />
+      <entry key="S60" value="9.35001420651366E-41" />
+      <entry key="M2" value="9.669547148917399E-21" />
+      <entry key="M5" value="9.866484867863406E-9" />
+      <entry key="M10" value="9.933018105220285E-5" />
+      <entry key="M15" value="0.0021448033767178195" />
+      <entry key="M30" value="0.046312021945903246" />
+      <entry key="H1" value="0.21520228146072978" />
+      <entry key="H2" value="0.4638989992021213" />
+      <entry key="H4" value="0.6811013134638051" />
+      <entry key="D1" value="0.9379980876643967" />
+      <entry key="W1" value="0.9908977685956066" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="1.3431497624760231" />
+      <entry key="MS500" value="2.7401998577834443" />
+      <entry key="S2" value="4.1140879391717" />
+      <entry key="S5" value="4.6054615838347255" />
+      <entry key="S10" value="4.79525410219716" />
+      <entry key="S30" value="4.93464839833192" />
+      <entry key="S60" value="5.082683143911276" />
+      <entry key="M2" value="5.576985343416623" />
+      <entry key="M5" value="6.574054509977935" />
+      <entry key="M10" value="7.467343194621702" />
+      <entry key="M15" value="8.364425710669476" />
+      <entry key="M30" value="11.17235334484613" />
+      <entry key="H1" value="15.54283397278503" />
+      <entry key="H2" value="20.058677660222244" />
+      <entry key="H4" value="23.453273230044292" />
+      <entry key="D1" value="27.145052610423782" />
+      <entry key="W1" value="27.87522120447033" />
+    </decayedShown>
+  </component>
+  <component name="OptimizeOnSaveOptions">
+    <option name="myRunOnSave" value="false" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 5,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3ExYAIE55F8he9n4eeV7Hsu8iRX" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Go Test.go test movie-vote/api.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.GoLinterPluginOnboardingV2&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.GoLinterPluginStorageMigration&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.analysis.ui.options.defaults&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/h.sukkar/Documents/Go/Votify&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;actions.on.save&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Applications/GoLand.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunManager" selected="Go Build.go build movie-vote">
+    <configuration name="go build movie-vote" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+      <module name="MoviePollGO" />
+      <working_directory value="$PROJECT_DIR$/movie-vote" />
+      <kind value="PACKAGE" />
+      <package value="movie-vote" />
+      <directory value="$PROJECT_DIR$" />
+      <auto_managed_config_id value="$PROJECT_DIR$/movie-vote" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go test movie-vote/api" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="MoviePollGO" />
+      <working_directory value="$PROJECT_DIR$/movie-vote/api" />
+      <root_directory value="$PROJECT_DIR$/movie-vote" />
+      <kind value="PACKAGE" />
+      <package value="movie-vote/api" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-WS-241.18034.50" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="80df4cc1-9e86-449e-a202-c932d5c93301" name="Changes" comment="" />
+      <created>1781121542734</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1781121542734</updated>
+      <workItem from="1781169537316" duration="31000" />
+      <workItem from="1781170153871" duration="58000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat: configure server and database from environment" />
+    <MESSAGE value="chore: remove IDE configuration files" />
+    <MESSAGE value="git commit -m &quot;feat: add public poll codes for poll sharing&quot;" />
+    <MESSAGE value="feat: support public poll codes for voting and results" />
+    <MESSAGE value="feat: add public poll code support across backend APIs" />
+    <MESSAGE value="fix(api): return camelCase poll data and support pollCode lookups" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(api): return camelCase poll data and support pollCode lookups" />
+  </component>
+</project>

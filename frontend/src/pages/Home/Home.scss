@@ -1,0 +1,25 @@
+.home-page {
+  .actions {
+    flex-wrap: wrap;
+  }
+}
+
+.name-entry-page {
+  min-height: calc(100vh - 96px);
+  display: grid;
+  place-items: center;
+
+  .name-form {
+    width: min(420px, 100%);
+    justify-items: stretch;
+    padding: 24px;
+    border: 1px solid #dde2e7;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 28px;
+  }
+}

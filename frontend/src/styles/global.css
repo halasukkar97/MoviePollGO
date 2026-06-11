@@ -1,0 +1,215 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #172026;
+  background: #f7f8fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-shell--name-entry main {
+  width: min(520px, calc(100% - 32px));
+  padding: 0;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 32px;
+  border-bottom: 1px solid #dde2e7;
+  background: #ffffff;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.header-menu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+nav a,
+.header-name-button,
+.language-button,
+.language-menu button {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #172026;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+nav a:hover,
+.header-name-button:hover,
+.language-button:hover,
+.language-menu button:hover {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+nav a.active {
+  font-weight: 700;
+}
+
+.language-switcher {
+  position: relative;
+}
+
+.language-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  display: grid;
+  min-width: 92px;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #dde2e7;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(23, 32, 38, 0.12);
+  z-index: 10;
+}
+
+.language-menu button {
+  justify-content: start;
+}
+
+main {
+  width: min(960px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 64px 0;
+}
+
+.page {
+  display: grid;
+  gap: 20px;
+}
+
+.page:not(.poll-page) {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  justify-items: stretch;
+}
+
+.page:not(.poll-page) > h1,
+.page:not(.poll-page) > p {
+  text-align: center;
+  justify-self: center;
+}
+
+.page:not(.poll-page) .form {
+  width: min(480px, 100%);
+  justify-self: center;
+}
+
+.page h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.page p {
+  margin: 0;
+  color: #52616d;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.actions a,
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid #172026;
+  border-radius: 6px;
+  background: #172026;
+  color: #ffffff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.form {
+  display: grid;
+  max-width: 480px;
+  gap: 16px;
+}
+
+.form h2 {
+  margin: 0;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+}
+
+input {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #c8d0d8;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+@media (max-width: 720px) {
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-menu,
+  nav {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  main {
+    padding: 40px 0;
+  }
+}
