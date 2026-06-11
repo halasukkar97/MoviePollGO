@@ -34,8 +34,8 @@ input:disabled {
 }
 
 .app-shell--name-entry main {
-  width: min(520px, calc(100% - 32px));
-  padding: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .site-header {
@@ -43,7 +43,7 @@ input:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 20px 32px;
+  padding: 20px 200px;
   border-bottom: 1px solid #dde2e7;
   background: #ffffff;
 }
@@ -116,9 +116,8 @@ nav a.active {
 }
 
 main {
-  width: min(960px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 64px 0;
+  width: 100%;
+  padding: 64px 200px;
 }
 
 .page {
@@ -127,8 +126,6 @@ main {
 }
 
 .page:not(.poll-page) {
-  width: min(720px, 100%);
-  margin: 0 auto;
   justify-items: stretch;
 }
 
@@ -139,8 +136,7 @@ main {
 }
 
 .page:not(.poll-page) .form {
-  width: min(480px, 100%);
-  justify-self: center;
+  width: 100%;
 }
 
 .page h1 {
@@ -175,7 +171,7 @@ button {
 
 .form {
   display: grid;
-  max-width: 480px;
+  width: 100%;
   gap: 16px;
 }
 
@@ -197,10 +193,35 @@ input {
   background: #ffffff;
 }
 
+@media (max-width: 1199px) {
+  .site-header {
+    padding-right: 64px;
+    padding-left: 64px;
+  }
+
+  main {
+    padding-right: 64px;
+    padding-left: 64px;
+  }
+}
+
+@media (max-width: 900px) {
+  .site-header {
+    padding-right: 32px;
+    padding-left: 32px;
+  }
+
+  main {
+    padding-right: 32px;
+    padding-left: 32px;
+  }
+}
+
 @media (max-width: 720px) {
   .site-header {
     align-items: flex-start;
     flex-direction: column;
+    padding: 20px 20px;
   }
 
   .header-menu,
@@ -210,6 +231,6 @@ input {
   }
 
   main {
-    padding: 40px 0;
+    padding: 40px 20px;
   }
 }
