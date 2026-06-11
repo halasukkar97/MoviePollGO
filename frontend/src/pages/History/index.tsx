@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../../api/client';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import type { HistoryPageProps, HistoryState } from './interfaces';
 import './History.scss';
 
@@ -22,6 +23,7 @@ function getPollStatus(isClosed: boolean, deadline: string, t: HistoryPageProps[
 
 // HistoryPage will show the user's previous polls once the backend supports it.
 export function HistoryPage({ t }: HistoryPageProps) {
+  usePageTitle('History');
   const [historyState, setHistoryState] = useState<HistoryState>({
     polls: [],
     isLoading: true,

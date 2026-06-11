@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
+import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslations } from './i18n/useTranslations';
 import type { Language } from './i18n/useTranslations';
+import { Breadcrumbs } from './components/Breadcrumbs';
 import { CreatePollPage } from './pages/CreatePoll';
 import { HistoryPage } from './pages/History';
 import { HomePage } from './pages/Home';
@@ -13,6 +14,7 @@ const USER_NAME_STORAGE_KEY = 'votify:userName';
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { language, languages, setLanguage, t } = useTranslations();
   const [savedName, setSavedName] = useState(() =>
     localStorage.getItem(USER_NAME_STORAGE_KEY) ?? '',
@@ -50,6 +52,17 @@ export default function App() {
     setIsLanguageMenuOpen(false);
   }
 
+  // isNavItemActive keeps header highlighting aligned with nested app routes.
+  function isNavItemActive(path: string, isActive: boolean) {
+    if (path === '/history') {
+      return location.pathname === '/history' ||
+        (location.pathname.startsWith('/polls/') && location.pathname !== '/polls/new') ||
+        location.pathname === '/results';
+    }
+
+    return isActive;
+  }
+
   return (
     <div className={isNameEntryVisible ? 'app-shell app-shell--name-entry' : 'app-shell'}>
       <header className="site-header">
@@ -64,7 +77,7 @@ export default function App() {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className={({ isActive }) => (isActive ? 'active' : undefined)}
+                  className={({ isActive }) => (isNavItemActive(item.to, isActive) ? 'active' : undefined)}
                 >
                   {item.label}
                 </NavLink>
@@ -103,6 +116,7 @@ export default function App() {
       </header>
 
       <main>
+        <Breadcrumbs t={t} />
         <Routes>
           <Route
             path="/"

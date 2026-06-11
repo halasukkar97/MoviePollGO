@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { apiClient } from '../../api/client';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import type { ExternalMovie } from '../../api/client';
 import type {
   LoadedPollState,
@@ -71,6 +72,8 @@ export function PollPage({ t }: PollPageProps) {
         }
       : null,
   );
+
+  usePageTitle(pollState.poll?.name ?? 'Poll');
 
   const votingEnded = useMemo(
     () => hasVotingEnded(pollState.poll?.deadline ?? '', pollState.poll?.isClosed ?? false),

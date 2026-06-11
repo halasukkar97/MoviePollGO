@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import type { TranslationKey } from '../../i18n/useTranslations';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import type { ResultsLookupFormValues } from './interfaces';
 import './PollResults.scss';
 
@@ -14,6 +15,7 @@ interface PollResultsPageProps {
 
 // PollResultsPage is responsible for looking up and showing a poll's results.
 export function PollResultsPage({ t }: PollResultsPageProps) {
+  usePageTitle('Results');
   // State stores the poll code that will be sent to the results API later.
   const [formValues, setFormValues] = useState<ResultsLookupFormValues>(initialFormValues);
 

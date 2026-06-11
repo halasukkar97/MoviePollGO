@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../../api/client';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import type { TranslationKey } from '../../i18n/useTranslations';
 import type { CreatePollFormValues } from './interfaces';
 import './CreatePoll.scss';
@@ -22,6 +23,7 @@ interface CreatePollPageProps {
 
 // CreatePollPage owns the form and feedback for creating a new movie poll.
 export function CreatePollPage({ t }: CreatePollPageProps) {
+  usePageTitle('Create Poll');
   const navigate = useNavigate();
   // formValues stores the input values before they are sent to the backend.
   const [formValues, setFormValues] = useState<CreatePollFormValues>(initialFormValues);

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import type { JoinPollPageProps } from './interfaces';
 import './JoinPoll.scss';
 
 // JoinPollPage collects the poll ID needed to enter an existing poll.
 export function JoinPollPage({ savedName, t }: JoinPollPageProps) {
+  usePageTitle('Join Poll');
   const navigate = useNavigate();
   // pollCode is the only value needed here; the voter name comes from localStorage later.
   const [pollCode, setPollCode] = useState('');

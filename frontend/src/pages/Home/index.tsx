@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import type { HomePageProps, NameFormSubmitEvent } from './interfaces';
 import './Home.scss';
 
@@ -10,6 +11,7 @@ export function HomePage({
   onSaveName,
   t,
 }: HomePageProps) {
+  usePageTitle('Home');
   // saveName sends the trimmed name up to App so it can be shared in the header.
   function saveName(event: NameFormSubmitEvent) {
     event.preventDefault();
