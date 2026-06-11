@@ -18,6 +18,7 @@ func expectEmptyRelations(mock sqlmock.Sqlmock, pollID string) {
 	mock.ExpectQuery("SELECT id, poll_id, title, release_year, description FROM movies WHERE poll_id").
 		WithArgs(pollID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "title", "release_year", "description"}))
+
 	mock.ExpectQuery("SELECT id, poll_id, user_id FROM votes WHERE poll_id").
 		WithArgs(pollID).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "user_id"}))
@@ -25,10 +26,23 @@ func expectEmptyRelations(mock sqlmock.Sqlmock, pollID string) {
 
 // expectPollLookup prepares the SQL rows needed by FindPollByID.
 func expectPollLookup(mock sqlmock.Sqlmock, pollID string, deadline time.Time) {
-	mock.ExpectQuery("SELECT id, name, is_closed, max_votes_per_person, deadline").
+	mock.ExpectQuery("SELECT id, poll_code, name, is_closed, max_votes_per_person, deadline").
 		WithArgs(pollID).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "is_closed", "max_votes_per_person", "deadline"}).
-			AddRow(pollID, "Movie Night", false, 2, deadline))
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id",
+			"poll_code",
+			"name",
+			"is_closed",
+			"max_votes_per_person",
+			"deadline",
+		}).AddRow(
+			pollID,
+			"12345678",
+			"Movie Night",
+			false,
+			2,
+			deadline,
+		))
 }
 
 func TestCreatePollHandlerCreatesPoll(t *testing.T) {
@@ -36,8 +50,11 @@ func TestCreatePollHandlerCreatesPoll(t *testing.T) {
 	deadline := time.Now().Add(24 * time.Hour).UTC()
 	body := bytes.NewBufferString(`{"name":"Movie Night","maxVotesPerPerson":2,"deadline":"` + deadline.Format(time.RFC3339Nano) + `"}`)
 
+	mock.ExpectQuery(`SELECT EXISTS\(SELECT 1 FROM polls WHERE poll_code = \$1\)`).
+		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(false))
+
 	mock.ExpectExec("INSERT INTO polls").
-		WithArgs(sqlmock.AnyArg(), "Movie Night", false, 2, deadline).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), "Movie Night", false, 2, deadline).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	request := httptest.NewRequest(http.MethodPost, "/polls", body)
@@ -54,7 +71,7 @@ func TestCreatePollHandlerCreatesPoll(t *testing.T) {
 		t.Fatalf("failed to decode poll response: %v", err)
 	}
 
-	if created.ID == "" || created.Name != "Movie Night" {
+	if created.ID == "" || created.PollCode == "" || created.Name != "Movie Night" {
 		t.Fatalf("unexpected created poll response: %+v", created)
 	}
 
@@ -76,17 +93,26 @@ func TestListPollsHandlerReturnsPollsWithMoviesAndVotes(t *testing.T) {
 	_, mock := newMockDatabase(t)
 	deadline := time.Now().Add(24 * time.Hour)
 
-	mock.ExpectQuery("SELECT id, name, is_closed, max_votes_per_person, deadline FROM polls").
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "is_closed", "max_votes_per_person", "deadline"}).
-			AddRow("poll-1", "Movie Night", false, 2, deadline))
+	mock.ExpectQuery("SELECT id, poll_code, name, is_closed, max_votes_per_person, deadline FROM polls").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id",
+			"poll_code",
+			"name",
+			"is_closed",
+			"max_votes_per_person",
+			"deadline",
+		}).AddRow("poll-1", "12345678", "Movie Night", false, 2, deadline))
+
 	mock.ExpectQuery("SELECT id, poll_id, title, release_year, description FROM movies WHERE poll_id").
 		WithArgs("poll-1").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "title", "release_year", "description"}).
 			AddRow("movie-1", "poll-1", "Dune", 2021, "Desert politics"))
+
 	mock.ExpectQuery("SELECT id, poll_id, user_id FROM votes WHERE poll_id").
 		WithArgs("poll-1").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "user_id"}).
 			AddRow("vote-1", "poll-1", "user-1"))
+
 	mock.ExpectQuery("SELECT movie_id FROM vote_movies").
 		WithArgs("vote-1").
 		WillReturnRows(sqlmock.NewRows([]string{"movie_id"}).AddRow("movie-1"))
@@ -101,14 +127,15 @@ func TestListPollsHandlerReturnsPollsWithMoviesAndVotes(t *testing.T) {
 	}
 
 	var polls []struct {
-		ID     string        `json:"ID"`
-		Movies []movie.Movie `json:"Movies"`
+		ID       string        `json:"ID"`
+		PollCode string        `json:"PollCode"`
+		Movies   []movie.Movie `json:"Movies"`
 	}
 	if err := json.NewDecoder(response.Body).Decode(&polls); err != nil {
 		t.Fatalf("failed to decode polls response: %v", err)
 	}
 
-	if len(polls) != 1 || polls[0].ID != "poll-1" || len(polls[0].Movies) != 1 {
+	if len(polls) != 1 || polls[0].ID != "poll-1" || polls[0].PollCode != "12345678" || len(polls[0].Movies) != 1 {
 		t.Fatalf("expected one hydrated poll, got %+v", polls)
 	}
 
@@ -139,14 +166,17 @@ func TestResultsHandlerReturnsVoteTotals(t *testing.T) {
 	deadline := time.Now().Add(24 * time.Hour)
 
 	expectPollLookup(mock, "poll-1", deadline)
+
 	mock.ExpectQuery("SELECT id, poll_id, title, release_year, description FROM movies WHERE poll_id").
 		WithArgs("poll-1").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "title", "release_year", "description"}).
 			AddRow("movie-1", "poll-1", "Dune", 2021, "Desert politics"))
+
 	mock.ExpectQuery("SELECT id, poll_id, user_id FROM votes WHERE poll_id").
 		WithArgs("poll-1").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "user_id"}).
 			AddRow("vote-1", "poll-1", "user-1"))
+
 	mock.ExpectQuery("SELECT movie_id FROM vote_movies").
 		WithArgs("vote-1").
 		WillReturnRows(sqlmock.NewRows([]string{"movie_id"}).AddRow("movie-1"))
@@ -174,6 +204,7 @@ func TestResultsHandlerReturnsVoteTotals(t *testing.T) {
 
 func TestCreateUserHandlerCreatesUser(t *testing.T) {
 	_, mock := newMockDatabase(t)
+
 	mock.ExpectExec("INSERT INTO users").
 		WithArgs(sqlmock.AnyArg(), "Hela").
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -192,6 +223,7 @@ func TestCreateUserHandlerCreatesUser(t *testing.T) {
 
 func TestListUsersHandlerReturnsUsers(t *testing.T) {
 	_, mock := newMockDatabase(t)
+
 	mock.ExpectQuery("SELECT id, name FROM users").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow("user-1", "Hela"))
 
@@ -220,9 +252,11 @@ func TestUsersHandlerRejectsUnsupportedMethods(t *testing.T) {
 
 func TestCreateMovieHandlerCreatesMovieWhenPollExists(t *testing.T) {
 	_, mock := newMockDatabase(t)
+
 	mock.ExpectQuery("SELECT EXISTS").
 		WithArgs("poll-1").
 		WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
 	mock.ExpectExec("INSERT INTO movies").
 		WithArgs(sqlmock.AnyArg(), "poll-1", "Dune", 2021, "Desert politics").
 		WillReturnResult(sqlmock.NewResult(1, 1))
@@ -242,6 +276,7 @@ func TestCreateMovieHandlerCreatesMovieWhenPollExists(t *testing.T) {
 
 func TestListMoviesHandlerReturnsMovies(t *testing.T) {
 	_, mock := newMockDatabase(t)
+
 	mock.ExpectQuery("SELECT id, poll_id, title, release_year, description FROM movies$").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "title", "release_year", "description"}).
 			AddRow("movie-1", "poll-1", "Dune", 2021, "Desert politics"))
@@ -274,20 +309,26 @@ func TestCreateVoteHandlerCreatesVote(t *testing.T) {
 	deadline := time.Now().Add(24 * time.Hour)
 
 	expectPollLookup(mock, "poll-1", deadline)
+
 	mock.ExpectQuery("SELECT id, poll_id, title, release_year, description FROM movies WHERE poll_id").
 		WithArgs("poll-1").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "title", "release_year", "description"}).
 			AddRow("movie-1", "poll-1", "Dune", 2021, "Desert politics"))
+
 	mock.ExpectQuery("SELECT id, poll_id, user_id FROM votes WHERE poll_id").
 		WithArgs("poll-1").
 		WillReturnRows(sqlmock.NewRows([]string{"id", "poll_id", "user_id"}))
+
 	mock.ExpectBegin()
+
 	mock.ExpectExec("INSERT INTO votes").
 		WithArgs(sqlmock.AnyArg(), "poll-1", "user-1").
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
 	mock.ExpectExec("INSERT INTO vote_movies").
 		WithArgs(sqlmock.AnyArg(), "movie-1").
 		WillReturnResult(sqlmock.NewResult(1, 1))
+
 	mock.ExpectCommit()
 
 	body := `{"pollId":"poll-1","userId":"user-1","movieIds":["movie-1"]}`

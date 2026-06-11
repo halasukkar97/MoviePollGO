@@ -8,20 +8,33 @@ import (
 	"votify/vote"
 )
 
-// FindPollByID searches the PostgreSQL polls table for a poll with the given ID.
-// It returns the poll and true when a row exists, otherwise nil and false.
+// FindPollByID searches for a poll by the internal UUID.
+// This ID is mainly for the database and backend relations.
 func FindPollByID(pollID string) (*poll.Poll, bool) {
+	return findPollByColumn("id", pollID)
+}
+
+// FindPollByCode searches for a poll by the public 8-digit poll code.
+// This is the code users will type when they join a poll.
+func FindPollByCode(pollCode string) (*poll.Poll, bool) {
+	return findPollByColumn("poll_code", pollCode)
+}
+
+// findPollByColumn loads a poll by one allowed database column.
+// We keep this helper private so callers cannot pass random SQL columns.
+func findPollByColumn(column string, value string) (*poll.Poll, bool) {
 	var foundPoll poll.Poll
 
 	// QueryRow expects one row back. Scan copies each selected database column
 	// into the matching field on foundPoll.
 	err := database.DB.QueryRow(
-		`SELECT id, name, is_closed, max_votes_per_person, deadline
+		`SELECT id, poll_code, name, is_closed, max_votes_per_person, deadline
 		FROM polls
-		WHERE id = $1`,
-		pollID,
+		WHERE `+column+` = $1`,
+		value,
 	).Scan(
 		&foundPoll.ID,
+		&foundPoll.PollCode,
 		&foundPoll.Name,
 		&foundPoll.IsClosed,
 		&foundPoll.MaxVotesPerPerson,
@@ -50,13 +63,14 @@ func FindPollByID(pollID string) (*poll.Poll, bool) {
 }
 
 // SavePoll stores a newly created poll in PostgreSQL.
-// Returning an error lets the HTTP handler send a clear failure response.
+// We store both the internal UUID and the public poll code.
 func SavePoll(poll poll.Poll) error {
 	_, err := database.DB.Exec(
 		`INSERT INTO polls
-		(id, name, is_closed, max_votes_per_person, deadline)
-		VALUES ($1, $2, $3, $4, $5)`,
+		(id, poll_code, name, is_closed, max_votes_per_person, deadline)
+		VALUES ($1, $2, $3, $4, $5, $6)`,
 		poll.ID,
+		poll.PollCode,
 		poll.Name,
 		poll.IsClosed,
 		poll.MaxVotesPerPerson,
@@ -64,6 +78,23 @@ func SavePoll(poll poll.Poll) error {
 	)
 
 	return err
+}
+
+// PollCodeExists checks if a public 8-digit poll code is already used.
+// This prevents two polls from getting the same join code.
+func PollCodeExists(pollCode string) (bool, error) {
+	var exists bool
+
+	err := database.DB.QueryRow(
+		"SELECT EXISTS(SELECT 1 FROM polls WHERE poll_code = $1)",
+		pollCode,
+	).Scan(&exists)
+
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
 }
 
 // SaveMovie stores a newly created movie in PostgreSQL.

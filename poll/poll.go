@@ -10,9 +10,11 @@ import (
 )
 
 // Poll represents a movie voting poll.
-// It stores the movies people can vote on and the votes that have been submitted.
+// ID is the internal UUID used by the database.
+// PollCode is the short public code users can share with friends.
 type Poll struct {
 	ID                string
+	PollCode          string
 	Name              string
 	IsClosed          bool
 	MaxVotesPerPerson int
@@ -22,18 +24,19 @@ type Poll struct {
 }
 
 // CreatePollInput contains the fields needed to create a new poll.
-// Keeping input in its own struct makes CreateNewPoll easier to call and test.
 type CreatePollInput struct {
+	PollCode          string
 	Name              string
 	MaxVotesPerPerson int
 	Deadline          time.Time
 }
 
 // CreateNewPoll creates a new poll.
-// It generates a unique ID and starts with empty movie and vote lists.
+// The UUID stays internal, while PollCode is the short public join code.
 func CreateNewPoll(input CreatePollInput) Poll {
 	return Poll{
 		ID:                uuid.New().String(),
+		PollCode:          input.PollCode,
 		Name:              input.Name,
 		MaxVotesPerPerson: input.MaxVotesPerPerson,
 		Deadline:          input.Deadline,
@@ -59,8 +62,7 @@ func (p *Poll) Close() {
 	p.IsClosed = true
 }
 
-// ValidateVoteCount checks if the vote count is allowed.
-// It returns true when the user selected no more than MaxVotesPerPerson movies.
+// ValidateVoteCount checks if the user selected no more than allowed.
 func (p *Poll) ValidateVoteCount(selectedMovieIDs []string) bool {
 	return len(selectedMovieIDs) <= p.MaxVotesPerPerson
 }
@@ -91,8 +93,7 @@ func (p *Poll) HasMovie(movieID string) bool {
 	return false
 }
 
-// HasDuplicateMovies checks for duplicate movie votes.
-// It returns true if the same movie ID appears more than once in one vote.
+// HasDuplicateMovies checks if the same movie was selected twice in one vote.
 func (p *Poll) HasDuplicateMovies(v vote.Vote) bool {
 	seenMovies := make(map[string]bool)
 
@@ -107,8 +108,7 @@ func (p *Poll) HasDuplicateMovies(v vote.Vote) bool {
 	return false
 }
 
-// AlreadyVoted checks if a user has already voted.
-// Each user can submit only one vote per poll.
+// AlreadyVoted checks if a user has already voted in this poll.
 func (p *Poll) AlreadyVoted(voterID string) bool {
 	for _, voteEntry := range p.Votes {
 		if voteEntry.UserID == voterID {

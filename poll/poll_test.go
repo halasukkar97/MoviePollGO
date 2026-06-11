@@ -11,6 +11,7 @@ import (
 // Test helpers keep each test short and focused on one behavior.
 func newTestPoll(maxVotes int, deadline time.Time) Poll {
 	return CreateNewPoll(CreatePollInput{
+		PollCode:          "12345678",
 		Name:              "Friday Movie Night",
 		MaxVotesPerPerson: maxVotes,
 		Deadline:          deadline,
@@ -55,6 +56,10 @@ func TestCreateNewPollSetsDefaults(t *testing.T) {
 
 	if p.ID == "" {
 		t.Fatal("expected poll ID to be generated")
+	}
+
+	if p.PollCode != "12345678" {
+		t.Errorf("expected poll code to be copied, got %q", p.PollCode)
 	}
 
 	if p.Name != "Friday Movie Night" {

@@ -1,7 +1,10 @@
 package api
 
 import (
+	"crypto/rand"
 	"encoding/json"
+	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -19,6 +22,7 @@ type CreatePollRequest struct {
 // CreatePollResponse is the JSON response sent back after a poll is created.
 type CreatePollResponse struct {
 	ID                string    `json:"id"`
+	PollCode          string    `json:"pollCode"`
 	Name              string    `json:"name"`
 	MaxVotesPerPerson int       `json:"maxVotesPerPerson"`
 	IsClosed          bool      `json:"isClosed"`
@@ -38,15 +42,22 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pollCode, err := GenerateUniquePollCode()
+	if err != nil {
+		http.Error(w, "failed to generate poll code", http.StatusInternalServerError)
+		return
+	}
+
 	// The poll package owns the rules for building a new poll.
 	createdPoll := poll.CreateNewPoll(poll.CreatePollInput{
+		PollCode:          pollCode,
 		Name:              req.Name,
 		MaxVotesPerPerson: req.MaxVotesPerPerson,
 		Deadline:          req.Deadline,
 	})
 
 	// Save the poll in PostgreSQL so later requests can list or find it.
-	err := SavePoll(createdPoll)
+	err = SavePoll(createdPoll)
 	if err != nil {
 		http.Error(w, "failed to save poll", http.StatusInternalServerError)
 		return
@@ -55,6 +66,7 @@ func CreatePollHandler(w http.ResponseWriter, r *http.Request) {
 	// Only expose the fields the API should return to the client.
 	response := CreatePollResponse{
 		ID:                createdPoll.ID,
+		PollCode:          createdPoll.PollCode,
 		Name:              createdPoll.Name,
 		MaxVotesPerPerson: createdPoll.MaxVotesPerPerson,
 		IsClosed:          createdPoll.IsClosed,
@@ -131,7 +143,7 @@ func ListPollsHandler(w http.ResponseWriter, r *http.Request) {
 func GetAllPolls() ([]poll.Poll, error) {
 	// Query returns rows, which must be scanned one at a time.
 	rows, err := database.DB.Query(
-		"SELECT id, name, is_closed, max_votes_per_person, deadline FROM polls",
+		"SELECT id, poll_code, name, is_closed, max_votes_per_person, deadline FROM polls",
 	)
 
 	if err != nil {
@@ -149,6 +161,7 @@ func GetAllPolls() ([]poll.Poll, error) {
 		// Scan copies the current row's columns into the poll struct fields.
 		err := rows.Scan(
 			&currentPoll.ID,
+			&currentPoll.PollCode,
 			&currentPoll.Name,
 			&currentPoll.IsClosed,
 			&currentPoll.MaxVotesPerPerson,
@@ -188,10 +201,13 @@ func GetAllPolls() ([]poll.Poll, error) {
 // PollByIDHandler handles GET /polls/{id}.
 // It extracts the ID from the URL path, loads that poll, and returns it as JSON.
 func PollByIDHandler(w http.ResponseWriter, r *http.Request) {
-	// TrimPrefix removes "/polls/" so the remaining path is the poll ID.
-	pollID := strings.TrimPrefix(r.URL.Path, "/polls/")
+	pollIdentifier := strings.TrimPrefix(r.URL.Path, "/polls/")
 
-	foundPoll, found := FindPollByID(pollID)
+	foundPoll, found := FindPollByCode(pollIdentifier)
+	if !found {
+		foundPoll, found = FindPollByID(pollIdentifier)
+	}
+
 	if !found {
 		http.Error(w, "poll not found", http.StatusNotFound)
 		return
@@ -202,5 +218,25 @@ func PollByIDHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 		return
+	}
+}
+
+func GenerateUniquePollCode() (string, error) {
+	for {
+		number, err := rand.Int(rand.Reader, big.NewInt(100000000))
+		if err != nil {
+			return "", err
+		}
+
+		code := fmt.Sprintf("%08d", number.Int64())
+
+		exists, err := PollCodeExists(code)
+		if err != nil {
+			return "", err
+		}
+
+		if !exists {
+			return code, nil
+		}
 	}
 }

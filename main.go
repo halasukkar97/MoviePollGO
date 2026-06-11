@@ -44,10 +44,28 @@ func main() {
 		port = "8080"
 	}
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, enableCORS(http.DefaultServeMux)))
 }
 
 // MovieVoteHandler handles the root route and returns a simple health message.
 func MovieVoteHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Movie Vote API updated")
+}
+
+// enableCORS allows the frontend development server to call this backend.
+// Without this, the browser blocks requests from localhost:5173 to localhost:8080.
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// OPTIONS is the browser's preflight check before the real request.
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

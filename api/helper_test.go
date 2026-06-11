@@ -49,6 +49,7 @@ func TestSavePollWritesPollToDatabase(t *testing.T) {
 	deadline := time.Now().Add(24 * time.Hour)
 	p := poll.Poll{
 		ID:                "poll-1",
+		PollCode:          "12345678",
 		Name:              "Movie Night",
 		IsClosed:          false,
 		MaxVotesPerPerson: 2,
@@ -56,7 +57,7 @@ func TestSavePollWritesPollToDatabase(t *testing.T) {
 	}
 
 	mock.ExpectExec("INSERT INTO polls").
-		WithArgs(p.ID, p.Name, p.IsClosed, p.MaxVotesPerPerson, p.Deadline).
+		WithArgs(p.ID, p.PollCode, p.Name, p.IsClosed, p.MaxVotesPerPerson, p.Deadline).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
 	if err := SavePoll(p); err != nil {
