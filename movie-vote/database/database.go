@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -15,9 +16,11 @@ var DB *sql.DB
 func Connect() error {
 	var err error
 
+	connectionString := os.Getenv("DATABASE_URL")
+
 	DB, err = sql.Open(
 		"postgres",
-		"host=localhost port=5432 user=hela-sukkar dbname=movie_vote sslmode=disable",
+		connectionString,
 	)
 
 	if err != nil {

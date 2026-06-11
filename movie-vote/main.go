@@ -6,6 +6,7 @@ import (
 	"movie-vote/api"
 	"movie-vote/database"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -35,13 +36,15 @@ func main() {
 	http.HandleFunc("/movies", api.MoviesHandler)
 	http.HandleFunc("/votes", api.CreateVoteHandler)
 	http.HandleFunc("/results", api.ResultsHandler)
-	// /movies/search calls TMDB instead of the local movie database.
 	http.HandleFunc("/movies/search", api.SearchMoviesHandler)
-	// The trailing slash route catches paths like /polls/abc-123.
 	http.HandleFunc("/polls/", api.PollByIDHandler)
 
-	// ListenAndServe keeps the server running and waits for browser/API requests.
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 // MovieVoteHandler handles the root route and returns a simple health message.
